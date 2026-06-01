@@ -1,0 +1,3740 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CryptoBridge — Transactions Bloquées, Déblocage Sécurisé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Cabinet+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050810;
+  --bg2: #080d1a;
+  --bg3: #0c1428;
+  --surface: #0f1930;
+  --surface2: #162240;
+  --blue: #1a6fff;
+  --blue-bright: #3d8bff;
+  --cyan: #00e5ff;
+  --violet: #8b5cf6;
+  --orange: #ff6b2b;
+  --yellow: #ffd166;
+  --green: #00e676;
+  --red: #ff4444;
+  --text: #e8edf8;
+  --text-dim: #7a8aaa;
+  --text-muted: #3d4f6e;
+  --border: rgba(26,111,255,0.18);
+  --glow: 0 0 40px rgba(26,111,255,0.25);
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'Cabinet Grotesk', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.4;
+}
+
+/* ── GRID BG ── */
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(26,111,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,111,255,0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 70px;
+  background: rgba(5,8,16,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo span {
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.nav-logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  list-style: none;
+}
+
+.nav-links a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.nav-links a:hover { color: var(--text); }
+
+.btn-nav {
+  padding: 8px 20px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-nav:hover { background: var(--blue-bright); transform: translateY(-1px); }
+
+/* ── PAGES ── */
+.page { display: none; min-height: 100vh; padding-top: 70px; position: relative; z-index: 1; }
+.page.active { display: block; }
+
+/* ── HOME PAGE ── */
+.hero {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -55%);
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(26,111,255,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-glow2 {
+  position: absolute;
+  top: 30%; left: 20%;
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  background: rgba(26,111,255,0.1);
+  border: 1px solid rgba(26,111,255,0.3);
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--blue-bright);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  animation: fadeDown 0.6s ease both;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--cyan);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+@keyframes fadeDown { from{opacity:0;transform:translateY(-20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+.hero h1 {
+  font-family: var(--font-head);
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  max-width: 820px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.7s 0.1s ease both;
+}
+
+.hero h1 .hl {
+  background: linear-gradient(135deg, var(--blue-bright) 0%, var(--cyan) 50%, var(--violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-sub {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+  max-width: 580px;
+  margin-bottom: 48px;
+  line-height: 1.7;
+  animation: fadeUp 0.7s 0.2s ease both;
+}
+
+.hero-btns {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.7s 0.3s ease both;
+}
+
+.btn-primary {
+  padding: 14px 28px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(26,111,255,0.4); }
+
+.btn-secondary {
+  padding: 14px 28px;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btn-secondary:hover {
+  border-color: rgba(26,111,255,0.5);
+  background: rgba(26,111,255,0.08);
+  transform: translateY(-2px);
+}
+
+.btn-orange {
+  background: var(--orange);
+  padding: 14px 28px;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.btn-orange:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(255,107,43,0.4); }
+
+/* ── STATS STRIP ── */
+.stats-strip {
+  display: flex;
+  justify-content: center;
+  gap: 64px;
+  padding: 40px;
+  flex-wrap: wrap;
+  animation: fadeIn 0.8s 0.5s both;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-num {
+  font-family: var(--font-head);
+  font-size: 2.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--blue-bright), var(--cyan));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-mono);
+  margin-top: 4px;
+}
+
+/* ── HOW IT WORKS ── */
+.section {
+  padding: 80px 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--blue-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 48px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  position: relative;
+  transition: all 0.3s;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--violet));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.card:hover::before { opacity: 1; }
+.card:hover { transform: translateY(-4px); border-color: rgba(26,111,255,0.35); box-shadow: var(--glow); }
+
+.card-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.card-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+}
+
+.card h3 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.card p {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+/* ── TWO PATHS ── */
+.two-paths {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 0;
+}
+
+@media (max-width: 768px) {
+  .two-paths { grid-template-columns: 1fr; }
+  nav { padding: 0 20px; }
+  .nav-links { display: none; }
+  .hero { padding: 60px 20px; }
+  .section { padding: 60px 20px; }
+  .stats-strip { gap: 32px; }
+}
+
+.path-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.path-card.sender {
+  border-top: 3px solid var(--blue);
+}
+
+.path-card.trusted {
+  border-top: 3px solid var(--orange);
+}
+
+.path-card:hover { transform: translateY(-6px); }
+.path-card.sender:hover { box-shadow: 0 20px 60px rgba(26,111,255,0.2); }
+.path-card.trusted:hover { box-shadow: 0 20px 60px rgba(255,107,43,0.2); }
+
+.path-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.path-card h2 {
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.path-card p {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* ── FORM PAGES ── */
+.form-page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 60px 40px;
+}
+
+.form-page h1 {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 8px;
+}
+
+.form-page .subtitle {
+  color: var(--text-dim);
+  margin-bottom: 40px;
+  font-size: 0.95rem;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 13px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(26,111,255,0.15);
+}
+
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+select option { background: var(--bg3); }
+
+textarea { min-height: 100px; resize: vertical; }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+.error-msg {
+  display: none;
+  color: var(--red);
+  font-size: 0.8rem;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+}
+
+.input-error { border-color: var(--red) !important; }
+
+.form-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-family: var(--font-mono);
+}
+
+/* ── INTERMEDIARY LIST ── */
+.list-page { padding: 60px 40px; max-width: 1200px; margin: 0 auto; }
+
+.list-header {
+  margin-bottom: 40px;
+}
+
+.filters-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.filter-group label {
+  font-size: 0.72rem;
+  margin-bottom: 0;
+}
+
+.filter-group select {
+  padding: 9px 12px;
+  font-size: 0.85rem;
+}
+
+.intermediary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.inter-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+
+.inter-card:hover {
+  border-color: rgba(26,111,255,0.4);
+  transform: translateY(-3px);
+  box-shadow: var(--glow);
+}
+
+.inter-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.inter-avatar {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: var(--font-head);
+}
+
+.inter-info { flex: 1; margin-left: 12px; }
+
+.inter-name {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.inter-country {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.badge-blue { background: rgba(26,111,255,0.15); color: var(--blue-bright); }
+.badge-green { background: rgba(0,230,118,0.12); color: var(--green); }
+.badge-orange { background: rgba(255,107,43,0.12); color: var(--orange); }
+.badge-violet { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.badge-yellow { background: rgba(255,209,102,0.12); color: var(--yellow); }
+
+.inter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.inter-stats {
+  display: flex;
+  gap: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.inter-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.inter-stat-val {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.stars {
+  color: var(--yellow);
+  font-size: 0.85rem;
+}
+
+/* ── DETAIL PAGE ── */
+.detail-page { max-width: 860px; margin: 0 auto; padding: 60px 40px; }
+
+.detail-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 40px;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.detail-avatar {
+  width: 80px; height: 80px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: var(--font-head);
+  flex-shrink: 0;
+}
+
+.detail-info h1 {
+  font-family: var(--font-head);
+  font-size: 1.7rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+
+.info-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.info-box-label {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.info-box-val {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.reviews-list { margin-bottom: 32px; }
+
+.review-item {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.review-author {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.review-text {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+}
+
+/* ── DASHBOARD ── */
+.dashboard-page { padding: 60px 40px; max-width: 1100px; margin: 0 auto; }
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+.dashboard-header h1 {
+  font-family: var(--font-head);
+  font-size: 1.8rem;
+  font-weight: 800;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 32px;
+}
+
+.tab-btn {
+  padding: 9px 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab-btn.active {
+  background: var(--blue);
+  color: #fff;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead tr {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  padding: 14px 20px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 500;
+}
+
+td {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(26,111,255,0.06);
+  font-size: 0.9rem;
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(26,111,255,0.04); }
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+.status-pending { background: rgba(255,209,102,0.12); color: var(--yellow); }
+.status-active { background: rgba(0,230,118,0.12); color: var(--green); }
+.status-done { background: rgba(26,111,255,0.12); color: var(--blue-bright); }
+
+/* ── FAQ ── */
+.faq-page { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
+
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.faq-item.open { border-color: rgba(26,111,255,0.35); }
+
+.faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  cursor: pointer;
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.faq-q:hover { background: var(--surface2); }
+
+.faq-chevron {
+  transition: transform 0.3s;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+}
+
+.faq-item.open .faq-chevron { transform: rotate(180deg); color: var(--blue-bright); }
+
+.faq-a {
+  display: none;
+  padding: 0 24px 20px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  background: var(--surface);
+}
+
+.faq-item.open .faq-a { display: block; }
+
+/* ── CONTACT ── */
+.contact-page { max-width: 600px; margin: 0 auto; padding: 60px 40px; }
+
+/* ── ALERT ── */
+.alert {
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  display: none;
+}
+
+.alert-warning {
+  background: rgba(255,107,43,0.1);
+  border: 1px solid rgba(255,107,43,0.3);
+  color: #ffaa80;
+}
+
+.alert-info {
+  background: rgba(26,111,255,0.1);
+  border: 1px solid rgba(26,111,255,0.3);
+  color: var(--blue-bright);
+}
+
+.alert-success {
+  background: rgba(0,230,118,0.1);
+  border: 1px solid rgba(0,230,118,0.3);
+  color: var(--green);
+}
+
+/* ── CHATBOT ── */
+#chat-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 8px 32px rgba(26,111,255,0.45);
+  transition: all 0.3s;
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)}
+}
+
+#chat-btn:hover { transform: scale(1.1) !important; animation: none; }
+
+#chat-btn .chat-notif {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 16px;
+  height: 16px;
+  background: var(--cyan);
+  border-radius: 50%;
+  font-size: 0.65rem;
+  color: var(--bg);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#chat-popup {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 380px;
+  height: 520px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  z-index: 5000;
+  display: none;
+  flex-direction: column;
+  box-shadow: 0 20px 80px rgba(0,0,0,0.7);
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+#chat-popup.open { display: flex; }
+
+.chat-header {
+  padding: 18px 20px;
+  background: linear-gradient(135deg, rgba(26,111,255,0.2), rgba(139,92,246,0.15));
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-header-avatar {
+  width: 40px; height: 40px;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+
+.chat-header-info h4 {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.chat-header-info span {
+  font-size: 0.75rem;
+  color: var(--green);
+  font-family: var(--font-mono);
+}
+
+.chat-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: color 0.2s;
+}
+
+.chat-close:hover { color: var(--text); }
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scroll-behavior: smooth;
+}
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 2px; }
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+}
+
+.msg.user { align-self: flex-end; align-items: flex-end; }
+.msg.bot { align-self: flex-start; align-items: flex-start; }
+
+.msg-bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.msg.user .msg-bubble {
+  background: var(--blue);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.bot .msg-bubble {
+  background: var(--surface2);
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.msg-time {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding: 0 2px;
+}
+
+.chat-suggestions {
+  padding: 8px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.suggestion-chip {
+  padding: 5px 12px;
+  background: rgba(26,111,255,0.1);
+  border: 1px solid rgba(26,111,255,0.25);
+  border-radius: 100px;
+  font-size: 0.75rem;
+  color: var(--blue-bright);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.suggestion-chip:hover { background: rgba(26,111,255,0.25); }
+
+.chat-input-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus { border-color: var(--blue); }
+
+.chat-send {
+  width: 40px; height: 40px;
+  background: var(--blue);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #fff;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.chat-send:hover { background: var(--blue-bright); transform: scale(1.05); }
+
+/* ── TYPING INDICATOR ── */
+.typing-indicator {
+  display: flex;
+  gap: 4px;
+  padding: 10px 14px;
+  background: var(--surface2);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--border);
+  width: fit-content;
+}
+
+.typing-dot {
+  width: 6px; height: 6px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  animation: typingDot 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingDot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+/* ── FOOTER ── */
+footer {
+  padding: 60px 40px 40px;
+  border-top: 1px solid var(--border);
+  margin-top: 40px;
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto 40px;
+}
+
+@media (max-width: 900px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 500px) { .footer-grid { grid-template-columns: 1fr; } }
+
+.footer-brand p {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-top: 12px;
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+.footer-col h4 {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+  color: var(--text);
+}
+
+.footer-col ul { list-style: none; }
+.footer-col ul li { margin-bottom: 10px; }
+
+.footer-col ul li a {
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.footer-col ul li a:hover { color: var(--text); }
+
+.footer-bottom {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 24px;
+  border-top: 1px solid rgba(26,111,255,0.08);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* ── DISCLAIMER BOX ── */
+.disclaimer-box {
+  background: rgba(255,107,43,0.05);
+  border: 1px solid rgba(255,107,43,0.2);
+  border-left: 3px solid var(--orange);
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+}
+
+.disclaimer-box p {
+  font-size: 0.85rem;
+  color: #ffaa80;
+  line-height: 1.6;
+}
+
+.disclaimer-box strong { color: var(--orange); }
+
+/* ── SUCCESS STATE ── */
+.success-state {
+  text-align: center;
+  padding: 60px 40px;
+}
+
+.success-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+}
+
+.success-state h2 {
+  font-family: var(--font-head);
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.success-state p {
+  color: var(--text-dim);
+  max-width: 400px;
+  margin: 0 auto 24px;
+}
+
+/* ── TRUSTED PAGE ── */
+.trusted-page { max-width: 700px; margin: 0 auto; padding: 60px 40px; }
+
+/* ── AUTH MODAL ── */
+@keyframes authSlide { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+#auth-overlay { display: none; }
+#auth-overlay.open { display: flex !important; }
+
+.auth-tab {
+  flex: 1;
+  padding: 16px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font-head);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.auth-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--blue);
+}
+
+.auth-tab:hover:not(.active) { color: var(--text); }
+
+.role-card {
+  padding: 14px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.role-card:hover { border-color: rgba(26,111,255,0.4); }
+.role-card.active {
+  border-color: var(--blue);
+  background: rgba(26,111,255,0.1);
+}
+
+/* ── NAV USER CHIP ── */
+#nav-user-btns { display: none; }
+
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── BACK BUTTON ── */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-bottom: 32px;
+}
+
+.back-btn:hover { color: var(--text); border-color: rgba(26,111,255,0.35); }
+
+/* ── SECTION DIVIDER ── */
+.divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 40px 0;
+}
+
+/* ── RISK CARDS ── */
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.risk-card {
+  background: rgba(255,68,68,0.05);
+  border: 1px solid rgba(255,68,68,0.15);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+}
+
+.risk-card .risk-icon { font-size: 1.8rem; margin-bottom: 10px; }
+.risk-card h4 { font-family: var(--font-head); font-weight: 700; font-size: 0.9rem; margin-bottom: 6px; }
+.risk-card p { font-size: 0.8rem; color: var(--text-dim); }
+
+/* ── CRYPTO TICKER ── */
+.ticker-wrap {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.ticker-scroll {
+  display: flex;
+  gap: 48px;
+  animation: ticker 30s linear infinite;
+  white-space: nowrap;
+  width: max-content;
+}
+
+@keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.ticker-item .sym { color: var(--text); font-weight: 600; }
+.ticker-item .price { color: var(--green); }
+
+/* ── AUTH MODAL ── */
+@keyframes authSlide { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+.auth-tab {
+  flex:1; padding:16px; background:none; border:none; color:var(--text-dim);
+  font-family:var(--font-head); font-size:0.9rem; font-weight:700; cursor:pointer;
+  border-bottom:2px solid transparent; transition:all 0.2s;
+}
+.auth-tab.active { color:var(--text); border-bottom-color:var(--blue); }
+.auth-tab:hover:not(.active) { color:var(--text); }
+.role-card {
+  padding:14px; background:var(--surface); border:2px solid var(--border);
+  border-radius:12px; text-align:center; cursor:pointer; transition:all 0.2s;
+}
+.role-card:hover { border-color:rgba(26,111,255,0.4); }
+.role-card.active { border-color:var(--blue); background:rgba(26,111,255,0.1); }
+
+
+/* ── PAGE TRANSITIONS ── */
+.page { animation: pageFadeIn 0.3s ease both; }
+@keyframes pageFadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── MOBILE HAMBURGER ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 6px;
+  border: none;
+  background: none;
+}
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-dim);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px,5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px,-5px); }
+
+#mobile-menu {
+  display: none;
+  position: fixed;
+  top: 70px; left: 0; right: 0;
+  background: rgba(8,13,26,0.98);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 20px 24px;
+  z-index: 999;
+  flex-direction: column;
+  gap: 4px;
+}
+#mobile-menu.open { display: flex; }
+#mobile-menu a {
+  padding: 12px 16px;
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: block;
+}
+#mobile-menu a:hover { color: var(--text); background: var(--surface); }
+#mobile-menu .menu-divider { height: 1px; background: var(--border); margin: 8px 0; }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  #nav-auth-btns .btn-secondary { display: none; }
+  .hamburger { display: flex; }
+}
+
+/* ── STEP INDICATOR (sender form) ── */
+.step-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 32px;
+}
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+.step-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+.step-item.done:not(:last-child)::after { background: var(--blue); }
+.step-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  z-index: 1;
+  position: relative;
+  transition: all 0.3s;
+}
+.step-item.active .step-dot {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(26,111,255,0.5);
+}
+.step-item.done .step-dot {
+  border-color: var(--green);
+  background: var(--green);
+  color: var(--bg);
+}
+.step-label {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-top: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+.step-item.active .step-label { color: var(--blue-bright); }
+.step-item.done .step-label { color: var(--green); }
+
+/* ── STEP PANELS ── */
+.step-panel { display: none; }
+.step-panel.active { display: block; animation: pageFadeIn 0.3s ease both; }
+
+/* ── VERIFIED BADGE ── */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  background: rgba(0,230,118,0.1);
+  border: 1px solid rgba(0,230,118,0.25);
+  border-radius: 100px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--green);
+  letter-spacing: 0.04em;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state .empty-icon { font-size: 3rem; margin-bottom: 16px; }
+.empty-state h3 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-dim);
+}
+.empty-state p { font-size: 0.85rem; }
+
+/* ── NAV MESSAGE BADGE ── */
+.nav-msg-badge {
+  position: absolute;
+  top: -3px;
+  right: -6px;
+  width: 16px;
+  height: 16px;
+  background: var(--red);
+  border-radius: 50%;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+}
+
+/* ── DASHBOARD PROGRESS ── */
+.progress-bar-wrap {
+  background: var(--surface2);
+  border-radius: 100px;
+  height: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 100px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan));
+  transition: width 1s ease;
+}
+
+/* ── TESTIMONIALS ── */
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+.testimonial-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  position: relative;
+  transition: all 0.3s;
+}
+.testimonial-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(26,111,255,0.3);
+}
+.testimonial-card::before {
+  content: '"';
+  position: absolute;
+  top: 12px;
+  left: 20px;
+  font-family: var(--font-head);
+  font-size: 4rem;
+  color: var(--blue);
+  opacity: 0.15;
+  line-height: 1;
+}
+.testi-text {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 16px;
+  margin-top: 8px;
+}
+.testi-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.testi-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  font-family: var(--font-head);
+}
+.testi-name { font-weight: 700; font-size: 0.88rem; }
+.testi-meta { font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); }
+
+/* ── WHATSAPP BUTTON ── */
+#whatsapp-btn {
+  position: fixed;
+  bottom: 96px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  background: #25D366;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  z-index: 4999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 20px rgba(37,211,102,0.4);
+  transition: all 0.3s;
+  text-decoration: none;
+}
+#whatsapp-btn:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(37,211,102,0.55); }
+
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="goPage('home')">
+    <div class="nav-logo-icon">⛓</div>
+    Crypto<span>Bridge</span>
+  </div>
+  <ul class="nav-links">
+    <li><a onclick="goPage('sender')">J'ai un blocage</a></li>
+    <li><a onclick="goPage('list')">Intermédiaires</a></li>
+    <li><a onclick="goPage('faq')">FAQ</a></li>
+    <li><a onclick="goPage('contact')">Contact</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div id="nav-auth-btns" style="display:flex;gap:10px;align-items:center">
+    <button class="btn-secondary" style="padding:8px 18px;font-size:0.88rem" onclick="openAuth('login')">Connexion</button>
+    <button class="btn-nav" onclick="openAuth('register')">S'inscrire</button>
+  </div>
+  <div id="nav-user-btns" style="display:none;gap:12px;align-items:center">
+    <div id="nav-user-chip" style="display:flex;align-items:center;gap:8px;padding:6px 14px;background:var(--surface);border:1px solid var(--border);border-radius:100px;cursor:pointer" onclick="goPage('dashboard')">
+      <div id="nav-avatar" style="width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--violet));display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:800;color:#fff">U</div>
+      <span id="nav-username" style="font-size:0.85rem;font-weight:600"></span>
+      <div style="position:relative;display:inline-flex"><span style="font-size:0.85rem">✉️</span><span class="nav-msg-badge" id="nav-msg-badge">2</span></div>
+    </div>
+    <button class="btn-secondary" style="padding:7px 16px;font-size:0.85rem" onclick="logout()">Déconnexion</button>
+  </div>
+</nav>
+
+<div id="mobile-menu">
+  <a onclick="goPage('sender');closeMobileMenu()">🔐 J'ai une transaction bloquée</a>
+  <a onclick="goPage('list');closeMobileMenu()">📋 Intermédiaires</a>
+  <a onclick="goPage('trusted');closeMobileMenu()">💼 Devenir intermédiaire</a>
+  <div class="menu-divider"></div>
+  <a onclick="goPage('faq');closeMobileMenu()">❓ FAQ</a>
+  <a onclick="goPage('contact');closeMobileMenu()">✉️ Contact</a>
+  <div class="menu-divider"></div>
+  <a onclick="openAuth('login');closeMobileMenu()" style="color:var(--blue-bright)">🔑 Connexion</a>
+  <a onclick="openAuth('register');closeMobileMenu()" style="color:var(--orange)">🚀 S'inscrire</a>
+</div>
+
+<!-- ═══════════════════════════ HOME PAGE ═══════════════════════════ -->
+<div id="page-home" class="page active">
+
+  <!-- TICKER -->
+  <div class="ticker-wrap" style="margin-top:0">
+    <div class="ticker-scroll">
+      <div class="ticker-item"><span class="sym">BTC</span> <span class="price">▲ +2.4%</span> 67,842 USD</div>
+      <div class="ticker-item"><span class="sym">ETH</span> <span class="price">▲ +1.1%</span> 3,521 USD</div>
+      <div class="ticker-item"><span class="sym">USDT</span> ≈ 1.00 USD</div>
+      <div class="ticker-item"><span class="sym">BNB</span> <span class="price">▲ +0.8%</span> 612 USD</div>
+      <div class="ticker-item"><span class="sym">SOL</span> <span class="price">▲ +3.2%</span> 178 USD</div>
+      <div class="ticker-item"><span class="sym">USDC</span> ≈ 1.00 USD</div>
+      <div class="ticker-item"><span class="sym">XRP</span> <span class="price">▲ +0.5%</span> 0.634 USD</div>
+      <div class="ticker-item"><span class="sym">BTC</span> <span class="price">▲ +2.4%</span> 67,842 USD</div>
+      <div class="ticker-item"><span class="sym">ETH</span> <span class="price">▲ +1.1%</span> 3,521 USD</div>
+      <div class="ticker-item"><span class="sym">USDT</span> ≈ 1.00 USD</div>
+      <div class="ticker-item"><span class="sym">BNB</span> <span class="price">▲ +0.8%</span> 612 USD</div>
+      <div class="ticker-item"><span class="sym">SOL</span> <span class="price">▲ +3.2%</span> 178 USD</div>
+      <div class="ticker-item"><span class="sym">USDC</span> ≈ 1.00 USD</div>
+      <div class="ticker-item"><span class="sym">XRP</span> <span class="price">▲ +0.5%</span> 0.634 USD</div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow2"></div>
+    <div class="hero-badge">🔒 Plateforme de confiance · Blockchain Verified</div>
+    <h1>Aide pour transactions crypto <span class="hl">validées mais bloquées</span></h1>
+    <p class="hero-sub">
+      Votre transaction est confirmée sur la blockchain mais bloquée en attente de décaissement ? 
+      Mettez-vous en relation avec des intermédiaires de confiance pour recevoir et transférer vos fonds.
+    </p>
+    <div class="hero-btns">
+      <button class="btn-primary" onclick="goPage('sender')">
+        🔐 J'ai une transaction bloquée
+      </button>
+      <button class="btn-orange" onclick="scrollToSection('section-intermediaire')">
+        💼 Je suis une personne de confiance
+      </button>
+      <button class="btn-secondary" onclick="goPage('list')">
+        Voir les intermédiaires →
+      </button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-strip">
+    <div class="stat"><div class="stat-num">2 840+</div><div class="stat-label">Transactions résolues</div></div>
+    <div class="stat"><div class="stat-num">184</div><div class="stat-label">Intermédiaires actifs</div></div>
+    <div class="stat"><div class="stat-num">42 pays</div><div class="stat-label">Couverture mondiale</div></div>
+    <div class="stat"><div class="stat-num">98.3%</div><div class="stat-label">Taux de satisfaction</div></div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section">
+    <div class="section-tag">// Fonctionnement</div>
+    <div class="section-title">Comment ça marche ?</div>
+    <div class="cards-grid">
+      <div class="card">
+        <div class="card-num">01 // DÉPÔT</div>
+        <div class="card-icon">📋</div>
+        <h3>Déposez votre demande</h3>
+        <p>Renseignez le montant, le type de crypto, le pays et la nature du blocage. Partagez le lien de la transaction sur l'explorer blockchain.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">02 // MISE EN RELATION</div>
+        <div class="card-icon">🤝</div>
+        <h3>Choisissez un intermédiaire</h3>
+        <p>Parcourez la liste des intermédiaires vérifiés selon les critères (pays, plateforme, crypto acceptée). Contactez celui de votre choix.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">03 // ACCORD</div>
+        <div class="card-icon">✅</div>
+        <h3>Négociez la commission</h3>
+        <p>Discutez des modalités via la messagerie interne sécurisée. Définissez la commission (ex: 20–30%) et la méthode de reversement.</p>
+      </div>
+      <div class="card">
+        <div class="card-num">04 // DÉCAISSEMENT</div>
+        <div class="card-icon">💸</div>
+        <h3>Déblocage des fonds</h3>
+        <p>L'intermédiaire reçoit et transfère vos fonds. Laissez un avis après l'opération pour aider la communauté.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-top:0">
+    <div class="section-tag">// Choisissez votre profil</div>
+    <div class="section-title">Vous êtes…</div>
+    <div class="two-paths" id="section-intermediaire">
+      <div class="path-card sender" onclick="goPage('sender')">
+        <div class="path-icon">🔐</div>
+        <h2>J'ai une transaction bloquée</h2>
+        <p>Vous avez reçu une confirmation blockchain mais ne pouvez pas décaisser ? Trouvez un intermédiaire de confiance pour vous aider.</p>
+        <button class="btn-primary" style="width:100%">Déposer ma demande →</button>
+      </div>
+      <div class="path-card trusted" onclick="goPage('trusted')">
+        <div class="path-icon">💼</div>
+        <h2>Personne de confiance</h2>
+        <p>Vous disposez d'un compte bancaire ou d'un portefeuille crypto ? Aidez des expéditeurs et gagnez une commission de 20–35%.</p>
+        <button class="btn-orange" style="width:100%">S'inscrire comme intermédiaire →</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- TÉMOIGNAGES -->
+  <div class="section" style="padding-top:0">
+    <div class="section-tag">// Ils nous font confiance</div>
+    <div class="section-title">Témoignages</div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testi-text">J'avais 4 200 USDT bloqués sur Binance à cause d'un KYC refusé. En 48h j'avais mes fonds sur Wave. Incroyable service !</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:rgba(255,107,43,0.15);color:#ff6b2b">K</div>
+          <div><div class="testi-name">Kouamé A.</div><div class="testi-meta">Côte d'Ivoire · BTC → Wave</div></div>
+          <div class="stars" style="margin-left:auto">★★★★★</div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testi-text">Ma banque bloquait tous les virements crypto depuis 3 mois. CryptoBridge m'a mis en contact avec Pierre en Belgique. Transaction parfaite, 20% de commission seulement.</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:rgba(26,111,255,0.15);color:#3d8bff">S</div>
+          <div><div class="testi-name">Sophie M.</div><div class="testi-meta">France · ETH → virement SEPA</div></div>
+          <div class="stars" style="margin-left:auto">★★★★★</div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testi-text">Plateforme sérieuse. Les avis sont vrais, les profils sont vérifiés. J'ai choisi Ibrahim au Sénégal pour un virement Wave. Fonds reçus en moins de 2h.</div>
+        <div class="testi-author">
+          <div class="testi-avatar" style="background:rgba(0,230,118,0.15);color:#00e676">O</div>
+          <div><div class="testi-name">Omar B.</div><div class="testi-meta">Sénégal · USDT → Wave</div></div>
+          <div class="stars" style="margin-left:auto">★★★★★</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<footer>
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <div class="nav-logo" style="margin-bottom:12px">
+          <div class="nav-logo-icon">⛓</div>
+          Crypto<span style="background:linear-gradient(135deg,var(--blue),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent">Bridge</span>
+        </div>
+        <p>Plateforme de mise en relation pour transactions crypto validées en attente de décaissement. Ne gère pas de fonds, ne conserve pas de clés.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Plateforme</h4>
+        <ul>
+          <li><a onclick="goPage('sender')">J'ai un blocage</a></li>
+          <li><a onclick="goPage('list')">Intermédiaires</a></li>
+          <li><a onclick="goPage('trusted')">Devenir intermédiaire</a></li>
+          <li><a onclick="goPage('dashboard')">Mon compte</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Ressources</h4>
+        <ul>
+          <li><a onclick="goPage('faq')">FAQ</a></li>
+          <li><a onclick="goPage('faq')">Risques & Sécurité</a></li>
+          <li><a onclick="goPage('faq')">Convertir Bitcoin</a></li>
+          <li><a onclick="goPage('contact')">Contact</a></li>
+        </ul>
+      </div>
+      <!-- // FIX LÉGAL -->
+      <div class="footer-col">
+        <h4>Légal</h4>
+        <ul>
+          <li><a href="#" onclick="openLegal('mentions');return false;">Mentions légales</a></li>
+          <li><a href="#" onclick="openLegal('cgu');return false;">CGU</a></li>
+          <li><a href="#" onclick="openLegal('confidentialite');return false;">Confidentialité</a></li>
+          <li><a href="#" onclick="openLegal('cookies');return false;">Cookies</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2024 CryptoBridge — Mise en relation uniquement, pas un prestataire de services de paiement</span>
+      <span>⚠️ Vérifiez toujours l'identité de votre intermédiaire</span>
+    </div>
+  </footer>
+</div>
+
+<!-- ═══════════════════════════ SENDER PAGE ═══════════════════════════ -->
+<div id="page-sender" class="page">
+  <div class="form-page">
+    <div class="back-btn" onclick="goPage('home')">← Retour</div>
+    <div class="section-tag">// Demande de décaissement</div>
+    <h1>J'ai une transaction bloquée</h1>
+    <p class="subtitle">Remplissez ce formulaire pour être mis en relation avec un intermédiaire de confiance.</p>
+
+    <div class="disclaimer-box">
+      <p><strong>⚠️ Avertissement :</strong> Ne partagez jamais vos clés privées, codes 2FA ou mots de passe. CryptoBridge est une plateforme de mise en relation uniquement et ne gère aucun fonds directement.</p>
+    </div>
+
+    <div id="sender-success" style="display:none">
+      <div class="success-state">
+        <div class="success-icon">✅</div>
+        <h2>Demande envoyée !</h2>
+        <p>Votre demande a été enregistrée. Les intermédiaires disponibles peuvent maintenant vous contacter. Consultez votre tableau de bord pour suivre l'avancement.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <button class="btn-primary" onclick="goPage('list')">Voir les intermédiaires</button>
+          <button class="btn-secondary" onclick="goPage('dashboard')">Mon tableau de bord</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step indicator -->
+    <div id="sender-steps">
+      <div class="step-bar">
+        <div class="step-item active" id="si-1">
+          <div class="step-dot">1</div>
+          <div class="step-label">Transaction</div>
+        </div>
+        <div class="step-item" id="si-2">
+          <div class="step-dot">2</div>
+          <div class="step-label">Blocage</div>
+        </div>
+        <div class="step-item" id="si-3">
+          <div class="step-dot">3</div>
+          <div class="step-label">Commission</div>
+        </div>
+      </div>
+
+      <form id="sender-form">
+        <!-- STEP 1 -->
+        <div class="step-panel active" id="sp-1">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Montant *</label>
+              <input type="number" id="s-amount" placeholder="ex: 12000" min="1">
+              <div class="error-msg" id="err-amount">Veuillez entrer un montant valide.</div>
+            </div>
+            <div class="form-group">
+              <label>Devise *</label>
+              <select id="s-currency">
+                <option value="EUR">EUR (€)</option>
+                <option value="USD">USD ($)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="XOF">XOF (FCFA)</option>
+                <option value="MAD">MAD (DH)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Type de crypto *</label>
+            <select id="s-crypto">
+              <option value="">Sélectionner</option>
+              <option>BTC</option><option>USDT</option><option>ETH</option>
+              <option>BNB</option><option>USDC</option><option>SOL</option>
+              <option>XRP</option><option>Autre</option>
+            </select>
+            <div class="error-msg" id="err-crypto">Veuillez sélectionner une crypto.</div>
+          </div>
+          <div class="form-group">
+            <label>Lien de la transaction (explorer) *</label>
+            <input type="url" id="s-txlink" placeholder="https://blockchain.com/btc/tx/... ou https://etherscan.io/tx/...">
+            <div class="form-hint">Blockchain.com, Etherscan, BSCScan, Solscan…</div>
+            <div class="error-msg" id="err-txlink">Veuillez entrer une URL valide.</div>
+          </div>
+          <button type="button" class="btn-primary" style="width:100%;padding:14px" onclick="nextStep(1)">Étape suivante →</button>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step-panel" id="sp-2">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Pays *</label>
+              <select id="s-country">
+                <option value="">Sélectionner</option>
+                <option>Bénin</option><option>Côte d'Ivoire</option><option>Sénégal</option>
+                <option>Burkina Faso</option><option>Mali</option><option>Niger</option>
+                <option>Togo</option><option>Cameroun</option><option>Guinea</option>
+                <option>Madagascar</option><option>Maroc</option><option>Algérie</option>
+                <option>Tunisie</option><option>Canada</option><option>USA</option>
+                <option>France</option><option>Belgique</option><option>Suisse</option>
+                <option>Autre</option>
+              </select>
+              <div class="error-msg" id="err-country">Veuillez sélectionner un pays.</div>
+            </div>
+            <div class="form-group">
+              <label>Type de blocage *</label>
+              <select id="s-block">
+                <option value="">Sélectionner</option>
+                <option>KYC non validé</option>
+                <option>Pas de compte bancaire</option>
+                <option>Compte bancaire bloqué</option>
+                <option>Plateforme restreinte dans mon pays</option>
+                <option>Transaction en attente de validation</option>
+                <option>Limite de retrait atteinte</option>
+                <option>Autre</option>
+              </select>
+              <div class="error-msg" id="err-block">Veuillez sélectionner le type de blocage.</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Description complémentaire</label>
+            <textarea id="s-desc" placeholder="Contexte optionnel. Ne pas inclure de clés privées ou codes de sécurité." style="min-height:90px"></textarea>
+          </div>
+          <div style="display:flex;gap:12px">
+            <button type="button" class="btn-secondary" style="padding:14px 20px" onclick="prevStep(2)">← Retour</button>
+            <button type="button" class="btn-primary" style="flex:1;padding:14px" onclick="nextStep(2)">Étape suivante →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step-panel" id="sp-3">
+          <div class="form-group">
+            <label>Commission proposée (%) *</label>
+            <input type="number" id="s-commission" placeholder="ex: 30" min="5" max="50" value="30" oninput="updateCommissionPreview()">
+            <div class="form-hint">Commission que vous proposez à l'intermédiaire (généralement 20–35%)</div>
+            <div class="error-msg" id="err-commission">Commission doit être entre 5 et 50%.</div>
+          </div>
+          <div id="commission-preview" style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px;display:none">
+            <div style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">Simulation</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center">
+              <div><div style="font-family:var(--font-head);font-size:1.1rem;font-weight:800" id="prev-total">–</div><div style="font-size:0.72rem;color:var(--text-muted)">Montant total</div></div>
+              <div><div style="font-family:var(--font-head);font-size:1.1rem;font-weight:800;color:var(--orange)" id="prev-commission">–</div><div style="font-size:0.72rem;color:var(--text-muted)">Commission intermédiaire</div></div>
+              <div><div style="font-family:var(--font-head);font-size:1.1rem;font-weight:800;color:var(--green)" id="prev-receive">–</div><div style="font-size:0.72rem;color:var(--text-muted)">Vous recevez</div></div>
+            </div>
+          </div>
+          <div class="disclaimer-box">
+            <p><strong>⚠️ Rappel :</strong> Ne partagez jamais vos clés privées, codes 2FA ou mots de passe. CryptoBridge est une plateforme de mise en relation uniquement.</p>
+          </div>
+          <div style="display:flex;gap:12px">
+            <button type="button" class="btn-secondary" style="padding:14px 20px" onclick="prevStep(3)">← Retour</button>
+            <button type="submit" class="btn-primary" style="flex:1;padding:14px;font-size:1rem">🚀 Soumettre ma demande</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ LIST PAGE ═══════════════════════════ -->
+<div id="page-list" class="page">
+  <div class="list-page">
+    <div class="back-btn" onclick="goPage('home')">← Retour</div>
+    <div class="section-tag">// Annuaire</div>
+    <h1 class="section-title">Intermédiaires disponibles</h1>
+
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label>Pays</label>
+        <select id="f-country" onchange="filterList()">
+          <option value="">Tous les pays</option>
+          <option>Bénin</option>
+          <option>Côte d'Ivoire</option>
+          <option>Sénégal</option>
+          <option>Burkina Faso</option>
+          <option>Mali</option>
+          <option>Niger</option>
+          <option>Togo</option>
+          <option>Cameroun</option>
+          <option>Maroc</option>
+          <option>Canada</option>
+          <option>USA</option>
+          <option>France</option>
+          <option>Belgique</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Crypto acceptée</label>
+        <select id="f-crypto" onchange="filterList()">
+          <option value="">Toutes</option>
+          <option>BTC</option>
+          <option>USDT</option>
+          <option>ETH</option>
+          <option>BNB</option>
+          <option>USDC</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Type de réception</label>
+        <select id="f-type" onchange="filterList()">
+          <option value="">Tous</option>
+          <option value="bancaire">Bancaire</option>
+          <option value="crypto">Crypto</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Commission max (%)</label>
+        <select id="f-commission" onchange="filterList()">
+          <option value="">Sans limite</option>
+          <option value="20">≤ 20%</option>
+          <option value="25">≤ 25%</option>
+          <option value="30">≤ 30%</option>
+          <option value="35">≤ 35%</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="intermediary-grid" id="inter-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ DETAIL PAGE ═══════════════════════════ -->
+<div id="page-detail" class="page">
+  <div class="detail-page">
+    <div class="back-btn" onclick="goPage('list')">← Retour à la liste</div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ TRUSTED PAGE ═══════════════════════════ -->
+<div id="page-trusted" class="page">
+  <div class="trusted-page">
+    <div class="back-btn" onclick="goPage('home')">← Retour</div>
+    <div class="section-tag">// Inscription intermédiaire</div>
+    <h1 style="font-family:var(--font-head);font-size:2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px">Je suis une personne de confiance</h1>
+    <p class="subtitle" style="color:var(--text-dim);margin-bottom:28px">Inscrivez-vous pour aider les expéditeurs et percevoir une commission de 20–35% par opération réussie.</p>
+
+    <div class="disclaimer-box">
+      <p><strong>📌 Comment ça fonctionne :</strong> Vous recevez les fonds (bancaire ou crypto), prélevez votre commission, puis reversez le reste à l'expéditeur. Vous restez responsable de la conformité avec la législation de votre pays.</p>
+    </div>
+
+    <div id="trusted-success" style="display:none">
+      <div class="success-state">
+        <div class="success-icon">🎉</div>
+        <h2>Inscription enregistrée !</h2>
+        <p>Votre profil sera visible dans la liste des intermédiaires après vérification. Vous recevrez un email de confirmation.</p>
+        <button class="btn-primary" onclick="goPage('dashboard')">Accéder à mon tableau de bord</button>
+      </div>
+    </div>
+
+    <form id="trusted-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Prénom *</label>
+          <input type="text" id="t-name" placeholder="Votre prénom ou alias">
+          <div class="error-msg" id="err-tname">Champ requis.</div>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input type="email" id="t-email" placeholder="contact@email.com">
+          <div class="error-msg" id="err-temail">Email invalide.</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type de réception *</label>
+          <select id="t-rectype">
+            <option value="">Sélectionner</option>
+            <option value="bancaire">Bancaire (virement)</option>
+            <option value="crypto">Crypto (portefeuille)</option>
+            <option value="both">Les deux</option>
+          </select>
+          <div class="error-msg" id="err-trectype">Champ requis.</div>
+        </div>
+        <div class="form-group">
+          <label>Pays du compte *</label>
+          <select id="t-country">
+            <option value="">Sélectionner</option>
+            <option>France</option>
+            <option>Belgique</option>
+            <option>Bénin</option>
+            <option>Côte d'Ivoire</option>
+            <option>Sénégal</option>
+            <option>Cameroun</option>
+            <option>Maroc</option>
+            <option>Suisse</option>
+            <option>Canada</option>
+            <option>USA</option>
+            <option>Autre</option>
+          </select>
+          <div class="error-msg" id="err-tcountry">Champ requis.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Plateforme(s) utilisée(s)</label>
+        <input type="text" id="t-platform" placeholder="ex: Binance, Coinbase, Kraken, Revolut…">
+        <div class="form-hint">Séparez par des virgules si plusieurs plateformes</div>
+      </div>
+
+      <div class="form-group">
+        <label>Cryptos acceptées *</label>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px">
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="BTC" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center" id="cb-btc"> BTC
+          </label>
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="USDT" id="cb-usdt" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer"> USDT
+          </label>
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="ETH" id="cb-eth" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer"> ETH
+          </label>
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="BNB" id="cb-bnb" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer"> BNB
+          </label>
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="USDC" id="cb-usdc" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer"> USDC
+          </label>
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="SOL" id="cb-sol" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer"> SOL
+          </label>
+          <label style="all:unset;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-dim);font-size:0.9rem">
+            <input type="checkbox" value="XRP" id="cb-xrp" style="all:unset;width:16px;height:16px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);cursor:pointer"> XRP
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Commission typique (%) *</label>
+        <input type="number" id="t-commission" placeholder="ex: 25" min="5" max="50">
+        <div class="form-hint">Entre 5% et 50% — généralement 20–35%</div>
+        <div class="error-msg" id="err-tcommission">Valeur entre 5 et 50 requise.</div>
+      </div>
+
+      <div class="divider"></div>
+      <h3 style="font-family:var(--font-head);font-size:1.1rem;font-weight:700;margin-bottom:16px">⚠️ Déclarer un blocage pendant une opération</h3>
+
+      <div class="form-group">
+        <label>Type de blocage rencontré</label>
+        <select id="t-blocktype">
+          <option value="">Aucun pour l'instant</option>
+          <option>Bancaire (virement refusé)</option>
+          <option>KYC requis par plateforme</option>
+          <option>Plateforme indisponible</option>
+          <option>Délais anormaux</option>
+          <option>Autre</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Description du blocage (sans données sensibles)</label>
+        <textarea id="t-blockdesc" placeholder="Décrivez le problème rencontré. Ne pas inclure de clés, codes 2FA ou mots de passe."></textarea>
+      </div>
+
+      <button type="submit" class="btn-orange" style="width:100%;padding:15px;font-size:1rem">
+        Créer mon profil intermédiaire →
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ DASHBOARD PAGE ═══════════════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dashboard-page">
+    <div class="dashboard-header">
+      <div>
+        <div class="section-tag">// Tableau de bord</div>
+        <h1>Bonjour, Utilisateur</h1>
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn-secondary" onclick="goPage('home')">Accueil</button>
+        <div class="badge badge-green" style="padding:10px 16px;font-size:0.8rem">● Actif</div>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="cards-grid" style="margin-bottom:32px">
+      <div class="card">
+        <div class="card-num" style="color:var(--blue-bright)">TOTAL DEMANDES</div>
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:800;margin:10px 0">3</div>
+        <p style="font-size:0.85rem;color:var(--text-dim)">2 en attente · 1 terminée</p>
+      </div>
+      <div class="card">
+        <div class="card-num" style="color:var(--green)">FONDS RÉCUPÉRÉS</div>
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:800;margin:10px 0">8 400€</div>
+        <p style="font-size:0.85rem;color:var(--text-dim)">Objectif : 12 000€</p>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:70%"></div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;font-family:var(--font-mono)">70% récupéré</p>
+      </div>
+      <div class="card">
+        <div class="card-num" style="color:var(--yellow)">MESSAGES</div>
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:800;margin:10px 0">5</div>
+        <p style="font-size:0.85rem;color:var(--text-dim)">2 non lus</p>
+      </div>
+    </div>
+
+
+    <!-- // ACTIONS RÉCENTES -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:28px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+        <h3 style="font-family:var(--font-head);font-weight:700;font-size:1rem">⚡ Actions récentes</h3>
+        <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted)">7 derniers jours</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border)">
+              <th style="padding:10px 14px;text-align:left;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Date</th>
+              <th style="padding:10px 14px;text-align:left;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Action</th>
+              <th style="padding:10px 14px;text-align:left;font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid rgba(26,111,255,0.06)">
+              <td style="padding:12px 14px;font-family:var(--font-mono);font-size:0.78rem;color:var(--text-muted)">22 Jan 2024</td>
+              <td style="padding:12px 14px;font-size:0.88rem">📋 Nouvelle demande créée — <strong>USDT 5 500 €</strong> (Bénin)</td>
+              <td style="padding:12px 14px"><span style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;font-family:var(--font-mono);background:rgba(255,209,102,0.12);color:#ffd166">En attente</span></td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(26,111,255,0.06)">
+              <td style="padding:12px 14px;font-family:var(--font-mono);font-size:0.78rem;color:var(--text-muted)">20 Jan 2024</td>
+              <td style="padding:12px 14px;font-size:0.88rem">✉️ Message reçu de <strong>Marc D.</strong> — demande #DEC-001</td>
+              <td style="padding:12px 14px"><span style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;font-family:var(--font-mono);background:rgba(0,229,255,0.1);color:#00e5ff">Non lu</span></td>
+            </tr>
+            <tr style="border-bottom:1px solid rgba(26,111,255,0.06)">
+              <td style="padding:12px 14px;font-family:var(--font-mono);font-size:0.78rem;color:var(--text-muted)">18 Jan 2024</td>
+              <td style="padding:12px 14px;font-size:0.88rem">⚠️ Blocage signalé — <strong>KYC Binance</strong> en cours de résolution</td>
+              <td style="padding:12px 14px"><span style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;font-family:var(--font-mono);background:rgba(255,107,43,0.12);color:#ff6b2b">En cours</span></td>
+            </tr>
+            <tr>
+              <td style="padding:12px 14px;font-family:var(--font-mono);font-size:0.78rem;color:var(--text-muted)">02 Déc 2023</td>
+              <td style="padding:12px 14px;font-size:0.88rem">⭐⭐⭐⭐⭐ Avis laissé pour <strong>Marc D.</strong> — transaction #DEC-003</td>
+              <td style="padding:12px 14px"><span style="padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:600;font-family:var(--font-mono);background:rgba(0,230,118,0.12);color:#00e676">Terminé</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this, 'tab-demandes')">Mes demandes</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-messages')">Messages</button>
+      <button class="tab-btn" onclick="switchTab(this, 'tab-avis')">Mes avis</button>
+    </div>
+
+    <div id="tab-demandes">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Crypto</th>
+              <th>Montant</th>
+              <th>Pays</th>
+              <th>Commission</th>
+              <th>Statut</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-family:var(--font-mono);color:var(--text-muted)">#DEC-001</td>
+              <td><span class="badge badge-orange">BTC</span></td>
+              <td style="font-weight:700">12 000 €</td>
+              <td>France</td>
+              <td>30%</td>
+              <td><span class="status-badge status-active">En cours</span></td>
+              <td style="color:var(--text-dim)">12/01/2024</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:var(--text-muted)">#DEC-002</td>
+              <td><span class="badge badge-green">USDT</span></td>
+              <td style="font-weight:700">5 500 €</td>
+              <td>Bénin</td>
+              <td>25%</td>
+              <td><span class="status-badge status-pending">En attente</span></td>
+              <td style="color:var(--text-dim)">18/01/2024</td>
+            </tr>
+            <tr>
+              <td style="font-family:var(--font-mono);color:var(--text-muted)">#DEC-003</td>
+              <td><span class="badge badge-blue">ETH</span></td>
+              <td style="font-weight:700">3 200 €</td>
+              <td>France</td>
+              <td>20%</td>
+              <td><span class="status-badge status-done">Terminée</span></td>
+              <td style="color:var(--text-dim)">02/12/2023</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="tab-messages" style="display:none">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px">
+        <div style="border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:600">Marc D. (Intermédiaire)</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-mono)">12 Jan 2024</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem">Bonjour, j'ai bien reçu votre demande concernant la transaction BTC. Je suis disponible pour vous aider. Pouvez-vous me confirmer le montant exact ?</p>
+          <span class="badge badge-blue" style="margin-top:8px;display:inline-flex">Non lu</span>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-weight:600">Support CryptoBridge</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-mono)">10 Jan 2024</span>
+          </div>
+          <p style="color:var(--text-dim);font-size:0.9rem">Votre demande #DEC-001 a été publiée et est visible des intermédiaires. Vous serez notifié lorsqu'un intermédiaire vous contactera.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-avis" style="display:none">
+      <div class="review-item">
+        <div class="review-header">
+          <span style="font-weight:600;font-family:var(--font-head)">À propos de Marc D.</span>
+          <div class="stars">★★★★★</div>
+        </div>
+        <p class="review-text">Opération parfaite, très réactif et professionnel. Les fonds ont été reversés dans les 48h comme convenu. Je recommande vivement.</p>
+        <div class="review-author" style="margin-top:8px">02 Déc 2023 · Transaction #DEC-003</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ FAQ PAGE ═══════════════════════════ -->
+<div id="page-faq" class="page">
+  <div class="faq-page">
+    <div class="back-btn" onclick="goPage('home')">← Retour</div>
+    <div class="section-tag">// Centre d'aide</div>
+    <h1 class="section-title">FAQ & Explications</h1>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span>Comment fonctionne la plateforme CryptoBridge ?</span>
+        <span class="faq-chevron">▾</span>
+      </div>
+      <div class="faq-a">
+        CryptoBridge est une plateforme de mise en relation entre personnes ayant une transaction crypto validée sur la blockchain mais bloquée en attente de décaissement, et des intermédiaires de confiance qui disposent d'un compte bancaire ou d'un portefeuille crypto. Nous ne gérons aucun fonds directement et ne conservons aucune clé privée. Notre rôle est uniquement de faciliter la mise en contact entre les deux parties.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span>Comment convertir du Bitcoin en euros ?</span>
+        <span class="faq-chevron">▾</span>
+      </div>
+      <div class="faq-a">
+        Pour convertir du Bitcoin en euros, vous avez plusieurs options :<br><br>
+        <strong>1. Via une plateforme d'échange réglementée (KYC requis) :</strong> Créez un compte sur Binance, Coinbase, Kraken ou Bitstamp. Vous devrez valider votre identité (pièce d'identité + justificatif de domicile). Ensuite, transférez vos BTC sur la plateforme, vendez-les contre des euros, puis retirez vers votre compte bancaire.<br><br>
+        <strong>2. Via un distributeur Bitcoin (BTM) :</strong> Certains distributeurs permettent la conversion BTC/EUR en espèces, mais les frais sont élevés (5–10%).<br><br>
+        <strong>3. Via un intermédiaire de confiance (comme sur cette plateforme) :</strong> Si vous ne pouvez pas accéder à une plateforme d'échange, un intermédiaire reçoit vos crypto et vous reverse les euros par virement ou mobile money, moins sa commission.<br><br>
+        <strong>⚠️ Impôts :</strong> En France, les plus-values sur crypto sont imposées à 30% (flat tax). Conservez vos relevés de transactions.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span>Comment débloquer une transaction crypto ?</span>
+        <span class="faq-chevron">▾</span>
+      </div>
+      <div class="faq-a">
+        Le déblocage dépend de la nature du blocage :<br><br>
+        <strong>KYC non validé :</strong> Soumettez vos documents d'identité complets sur la plateforme concernée. Le processus peut prendre 1 à 5 jours ouvrés.<br><br>
+        <strong>Compte bancaire bloqué :</strong> Contactez votre banque pour comprendre la raison. Les virements crypto sont parfois bloqués pour des raisons de conformité AML. Un changement de banque ou l'utilisation d'un néobanque (Revolut, N26) peut résoudre le problème.<br><br>
+        <strong>Plateforme inaccessible dans votre pays :</strong> Certaines plateformes sont restreintes dans certains pays. Un intermédiaire dans un pays compatible peut recevoir les fonds et vous les reverser.<br><br>
+        <strong>Transaction en attente :</strong> Sur Bitcoin, une transaction avec des frais trop bas peut rester en attente. Utilisez un accélérateur de transactions ou attendez la résolution.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span>Que faire si mon compte bancaire bloque un virement crypto ?</span>
+        <span class="faq-chevron">▾</span>
+      </div>
+      <div class="faq-a">
+        De nombreuses banques traditionnelles bloquent automatiquement les virements provenant de plateformes crypto (Tracfin, lutte anti-blanchiment). Voici les solutions :<br><br>
+        1. Contactez votre banque et expliquez l'origine licite des fonds (fournir justificatifs d'achat de crypto).<br>
+        2. Utilisez une néobanque plus tolérante aux crypto (Revolut, Wise, N26).<br>
+        3. Demandez à la plateforme d'échange de fractionner le virement en plusieurs parties plus petites.<br>
+        4. Passez par un intermédiaire qui reçoit en crypto et peut reverser via un réseau de paiement mobile (Wave, Orange Money, etc.) si applicable dans votre pays.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span>Comment signaler un blocage pendant une opération ?</span>
+        <span class="faq-chevron">▾</span>
+      </div>
+      <div class="faq-a">
+        Si vous êtes intermédiaire et rencontrez un blocage pendant une opération en cours :<br><br>
+        1. Rendez-vous dans votre tableau de bord, onglet "Mes opérations".<br>
+        2. Cliquez sur l'opération concernée et sélectionnez "Déclarer un blocage".<br>
+        3. Remplissez le formulaire en indiquant le type de blocage (bancaire, KYC, plateforme, autre) et une description.<br>
+        4. <strong>NE JAMAIS inclure de clés privées, codes 2FA ou mots de passe.</strong><br><br>
+        Vous pouvez aussi utiliser la section dédiée dans la page d'inscription intermédiaire pour déclarer les blocages types que vous avez déjà rencontrés.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <span>Quels sont les risques de cette plateforme ?</span>
+        <span class="faq-chevron">▾</span>
+      </div>
+      <div class="faq-a">
+        Il est important de comprendre les risques avant d'utiliser CryptoBridge :
+      </div>
+    </div>
+
+    <div class="risk-grid" style="margin-bottom:40px">
+      <div class="risk-card">
+        <div class="risk-icon">🎭</div>
+        <h4>Arnaque / Escroquerie</h4>
+        <p>Risque de vol de fonds par un faux intermédiaire. Vérifiez toujours les avis et l'historique.</p>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">📉</div>
+        <h4>Volatilité crypto</h4>
+        <p>Le prix peut changer entre l'envoi et le décaissement. Préférez les stablecoins (USDT/USDC).</p>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">⚖️</div>
+        <h4>Risque légal</h4>
+        <p>Les réglementations crypto varient selon les pays. Vérifiez la conformité dans votre juridiction.</p>
+      </div>
+      <div class="risk-card">
+        <div class="risk-icon">🏦</div>
+        <h4>Blocage bancaire</h4>
+        <p>Les banques peuvent bloquer les virements suspects. Préparez vos justificatifs à l'avance.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CONTACT PAGE ═══════════════════════════ -->
+<div id="page-contact" class="page">
+  <div class="contact-page">
+    <div class="back-btn" onclick="goPage('home')">← Retour</div>
+    <div class="section-tag">// Support</div>
+    <h1 style="font-family:var(--font-head);font-size:2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px">Contactez-nous</h1>
+    <p style="color:var(--text-dim);margin-bottom:32px">Une question, un signalement ou besoin d'aide ? Notre équipe répond sous 24–48h.</p>
+
+    <div id="contact-success" style="display:none">
+      <div class="success-state">
+        <div class="success-icon">📩</div>
+        <h2>Message envoyé !</h2>
+        <p>Nous vous répondrons dans les 24–48h à l'adresse email indiquée.</p>
+        <button class="btn-primary" onclick="goPage('home')">Retour à l'accueil</button>
+      </div>
+    </div>
+
+    <form id="contact-form">
+      <div class="form-group">
+        <label>Nom complet *</label>
+        <input type="text" id="c-name" placeholder="Votre nom">
+        <div class="error-msg" id="err-cname">Champ requis.</div>
+      </div>
+      <div class="form-group">
+        <label>Email *</label>
+        <input type="email" id="c-email" placeholder="votre@email.com">
+        <div class="error-msg" id="err-cemail">Email invalide.</div>
+      </div>
+      <div class="form-group">
+        <label>Sujet</label>
+        <select id="c-subject">
+          <option>Question générale</option>
+          <option>Signalement d'arnaque</option>
+          <option>Problème technique</option>
+          <option>Devenir intermédiaire</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Message *</label>
+        <textarea id="c-message" placeholder="Décrivez votre demande…" style="min-height:140px"></textarea>
+        <div class="error-msg" id="err-cmessage">Veuillez entrer un message.</div>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;padding:15px;font-size:1rem">Envoyer le message →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ CHATBOT ═══════════════════════════ -->
+<!-- ═══════════════════════════ AUTH MODAL ═══════════════════════════ -->
+<div id="auth-overlay" onclick="overlayClose(event)" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,0.88);backdrop-filter:blur(14px);z-index:8000;align-items:center;justify-content:center;padding:20px">
+  <div id="auth-box" style="width:100%;max-width:460px;background:var(--bg2);border:1px solid var(--border);border-radius:24px;overflow:hidden;position:relative">
+
+    <!-- TABS -->
+    <div style="display:flex;align-items:center;border-bottom:1px solid var(--border)">
+      <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Connexion</button>
+      <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Inscription</button>
+      <button onclick="closeAuth()" style="margin-left:auto;margin-right:16px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1.3rem;line-height:1;padding:4px 8px">✕</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="panel-login" style="padding:36px 36px 32px">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:2.4rem;margin-bottom:10px">🔐</div>
+        <h2 style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:6px">Bon retour !</h2>
+        <p style="color:var(--text-dim);font-size:0.88rem">Connectez-vous à votre compte CryptoBridge</p>
+      </div>
+      <div id="login-error" style="display:none;padding:12px 16px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.25);border-radius:8px;color:#ff8888;font-size:0.85rem;margin-bottom:16px">❌ Identifiants incorrects. Réessayez.</div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="l-email" placeholder="votre@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="error-msg" id="err-lemail">Email invalide.</div>
+      </div>
+      <div class="form-group" style="position:relative">
+        <label>Mot de passe</label>
+        <input type="password" id="l-password" placeholder="••••••••" style="padding-right:44px" onkeydown="if(event.key==='Enter')doLogin()">
+        <button type="button" onclick="togglePwd('l-password',this)" style="position:absolute;right:12px;top:36px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">👁</button>
+        <div class="error-msg" id="err-lpwd">Mot de passe requis.</div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
+        <a style="font-size:0.8rem;color:var(--blue-bright);cursor:pointer;font-family:var(--font-mono)" onclick="showForgot()">Mot de passe oublié ?</a>
+      </div>
+      <button type="button" onclick="doLogin()" class="btn-primary" style="width:100%;padding:14px;font-size:0.95rem">Se connecter →</button>
+      <div style="text-align:center;margin-top:18px;font-size:0.85rem;color:var(--text-dim)">
+        Pas encore de compte ? <a style="color:var(--blue-bright);cursor:pointer" onclick="switchAuthTab('register')">S'inscrire</a>
+      </div>
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid var(--border)">
+        <p style="text-align:center;font-size:0.72rem;color:var(--text-muted);margin-bottom:10px;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.08em">Comptes de démonstration</p>
+        <div style="display:flex;gap:8px">
+          <button type="button" onclick="fillDemo('sender')" style="flex:1;padding:9px;background:rgba(26,111,255,0.08);border:1px solid rgba(26,111,255,0.22);border-radius:8px;color:var(--blue-bright);font-size:0.78rem;cursor:pointer;font-family:var(--font-mono);transition:background 0.2s" onmouseover="this.style.background='rgba(26,111,255,0.18)'" onmouseout="this.style.background='rgba(26,111,255,0.08)'">🔐 Expéditeur</button>
+          <button type="button" onclick="fillDemo('intermediary')" style="flex:1;padding:9px;background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.22);border-radius:8px;color:var(--orange);font-size:0.78rem;cursor:pointer;font-family:var(--font-mono);transition:background 0.2s" onmouseover="this.style.background='rgba(255,107,43,0.18)'" onmouseout="this.style.background='rgba(255,107,43,0.08)'">💼 Intermédiaire</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="panel-register" style="padding:28px 36px 32px;display:none">
+      <div style="text-align:center;margin-bottom:22px">
+        <div style="font-size:2.2rem;margin-bottom:8px">🚀</div>
+        <h2 style="font-family:var(--font-head);font-size:1.4rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px">Créer un compte</h2>
+        <p style="color:var(--text-dim);font-size:0.85rem">Rejoignez CryptoBridge gratuitement</p>
+      </div>
+
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-family:var(--font-mono);font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">Je suis un(e)…</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div id="role-sender" class="role-card active" onclick="selectRole('sender')">
+            <div style="font-size:1.3rem;margin-bottom:4px">🔐</div>
+            <div style="font-family:var(--font-head);font-weight:700;font-size:0.85rem">Expéditeur</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);margin-top:2px">Transaction bloquée</div>
+          </div>
+          <div id="role-intermediary" class="role-card" onclick="selectRole('intermediary')">
+            <div style="font-size:1.3rem;margin-bottom:4px">💼</div>
+            <div style="font-family:var(--font-head);font-weight:700;font-size:0.85rem">Intermédiaire</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);margin-top:2px">Aider & gagner</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Prénom *</label>
+          <input type="text" id="r-firstname" placeholder="Jean">
+          <div class="error-msg" id="err-rfirstname">Requis.</div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Nom *</label>
+          <input type="text" id="r-lastname" placeholder="Dupont">
+          <div class="error-msg" id="err-rlastname">Requis.</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px">
+        <label>Email *</label>
+        <input type="email" id="r-email" placeholder="votre@email.com">
+        <div class="error-msg" id="err-remail">Email invalide.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;position:relative">
+        <label>Mot de passe *</label>
+        <input type="password" id="r-password" placeholder="8 caractères minimum" style="padding-right:44px" oninput="checkPwdStrength(this.value)">
+        <button type="button" onclick="togglePwd('r-password',this)" style="position:absolute;right:12px;top:36px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">👁</button>
+        <div id="pwd-strength-bar" style="height:3px;border-radius:2px;margin-top:8px;background:var(--surface2);overflow:hidden"><div id="pwd-strength-fill" style="height:100%;width:0;transition:all 0.3s"></div></div>
+        <div id="pwd-strength-label" style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-muted);margin-top:4px"></div>
+        <div class="error-msg" id="err-rpwd">8 caractères minimum.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:14px;position:relative">
+        <label>Confirmer le mot de passe *</label>
+        <input type="password" id="r-confirm" placeholder="••••••••" style="padding-right:44px">
+        <button type="button" onclick="togglePwd('r-confirm',this)" style="position:absolute;right:12px;top:36px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1rem">👁</button>
+        <div class="error-msg" id="err-rconfirm">Les mots de passe ne correspondent pas.</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Pays *</label>
+        <select id="r-country">
+          <option value="">Sélectionner votre pays</option>
+          <option>Bénin</option><option>Côte d'Ivoire</option><option>Sénégal</option>
+          <option>Burkina Faso</option><option>Mali</option><option>Niger</option>
+          <option>Togo</option><option>Cameroun</option><option>Guinea</option>
+          <option>Madagascar</option><option>Maroc</option><option>Algérie</option>
+          <option>Tunisie</option><option>Canada</option><option>USA</option>
+          <option>France</option><option>Belgique</option><option>Suisse</option>
+          <option>Autre</option>
+        </select>
+        <div class="error-msg" id="err-rcountry">Requis.</div>
+      </div>
+
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:16px;font-size:0.82rem;color:var(--text-dim)">
+        <input type="checkbox" id="r-terms" style="margin-top:3px;flex-shrink:0;accent-color:var(--blue)">
+        <span>J'accepte les <a style="color:var(--blue-bright)">Conditions d'utilisation</a> et la <a style="color:var(--blue-bright)">Politique de confidentialité</a>. Je comprends que CryptoBridge est une plateforme de mise en relation uniquement.</span>
+      </label>
+      <div class="error-msg" id="err-rterms" style="margin-top:-10px;margin-bottom:14px">Vous devez accepter les CGU.</div>
+
+      <button type="button" onclick="doRegister()" class="btn-primary" style="width:100%;padding:14px;font-size:0.95rem">Créer mon compte →</button>
+      <div style="text-align:center;margin-top:14px;font-size:0.85rem;color:var(--text-dim)">
+        Déjà inscrit ? <a style="color:var(--blue-bright);cursor:pointer" onclick="switchAuthTab('login')">Se connecter</a>
+      </div>
+    </div>
+
+    <!-- FORGOT -->
+    <div id="panel-forgot" style="padding:36px;display:none">
+      <button type="button" onclick="switchAuthTab('login')" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:0.85rem;margin-bottom:20px;display:flex;align-items:center;gap:6px">← Retour</button>
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:2.4rem;margin-bottom:10px">📧</div>
+        <h2 style="font-family:var(--font-head);font-size:1.5rem;font-weight:800;margin-bottom:6px">Mot de passe oublié</h2>
+        <p style="color:var(--text-dim);font-size:0.88rem">Entrez votre email, nous vous enverrons un lien de réinitialisation.</p>
+      </div>
+      <div id="forgot-success" style="display:none;text-align:center;padding:20px">
+        <div style="font-size:2.5rem;margin-bottom:12px">✅</div>
+        <p style="color:var(--green);font-weight:600">Email envoyé !</p>
+        <p style="color:var(--text-dim);font-size:0.85rem;margin-top:6px">Vérifiez votre boîte de réception (et les spams).</p>
+      </div>
+      <div id="forgot-form-inner">
+        <div class="form-group">
+          <label>Adresse email</label>
+          <input type="email" id="f-email" placeholder="votre@email.com">
+        </div>
+        <button type="button" onclick="doForgot()" class="btn-primary" style="width:100%;padding:14px">Envoyer le lien de réinitialisation</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- // FIX LÉGAL — Modal légale -->
+<div id="legal-overlay" onclick="if(event.target===this)closeLegal()" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,0.92);backdrop-filter:blur(16px);z-index:8500;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto">
+  <div style="width:100%;max-width:720px;background:#080d1a;border:1px solid rgba(26,111,255,0.2);border-radius:20px;overflow:hidden;animation:authSlide 0.3s ease both;margin:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 28px;border-bottom:1px solid rgba(26,111,255,0.12);background:#080d1a">
+      <h3 id="legal-title" style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;color:#e8edf8"></h3>
+      <button onclick="closeLegal()" style="background:none;border:none;color:#7a8aaa;cursor:pointer;font-size:1.3rem;padding:4px 8px">✕</button>
+    </div>
+    <div id="legal-body" style="padding:28px;color:#9aa8c0;font-size:0.88rem;line-height:1.8;max-height:72vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ AUTH MODAL ═══════════════════════════ -->
+<div id="auth-overlay" onclick="if(event.target===this)closeAuth()" style="display:none;position:fixed;inset:0;background:rgba(5,8,16,0.92);backdrop-filter:blur(14px);z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="width:100%;max-width:460px;background:#080d1a;border:1px solid rgba(26,111,255,0.2);border-radius:24px;overflow:hidden;animation:authSlide 0.3s ease both">
+    <div style="display:flex;align-items:center;border-bottom:1px solid rgba(26,111,255,0.12)">
+      <button id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Connexion</button>
+      <button id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Inscription</button>
+      <button onclick="closeAuth()" style="margin-left:auto;margin-right:16px;background:none;border:none;color:#7a8aaa;cursor:pointer;font-size:1.3rem;padding:4px 8px">✕</button>
+    </div>
+    <div id="panel-login" style="padding:36px 36px 32px">
+      <div style="text-align:center;margin-bottom:28px"><div style="font-size:2.4rem;margin-bottom:10px">🔐</div><h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:6px">Bon retour !</h2><p style="color:#7a8aaa;font-size:0.88rem">Connectez-vous à votre compte CryptoBridge</p></div>
+      <div id="login-error" style="display:none;padding:12px 16px;background:rgba(255,68,68,0.1);border:1px solid rgba(255,68,68,0.25);border-radius:8px;color:#ff8888;font-size:0.85rem;margin-bottom:16px">❌ Identifiants incorrects. Réessayez.</div>
+      <div class="form-group"><label>Email</label><input type="email" id="l-email" placeholder="sender@demo.com" onkeydown="if(event.key==='Enter')doLogin()"><div class="error-msg" id="err-lemail">Email invalide.</div></div>
+      <div class="form-group" style="position:relative"><label>Mot de passe</label><input type="password" id="l-password" placeholder="••••••••" style="padding-right:44px" onkeydown="if(event.key==='Enter')doLogin()"><button type="button" onclick="togglePwd('l-password',this)" style="position:absolute;right:12px;top:36px;background:none;border:none;color:#3d4f6e;cursor:pointer;font-size:1rem">👁</button><div class="error-msg" id="err-lpwd">Mot de passe requis.</div></div>
+      <div style="display:flex;justify-content:flex-end;margin-bottom:20px"><a style="font-size:0.8rem;color:#3d8bff;cursor:pointer;font-family:'DM Mono',monospace" onclick="showForgot()">Mot de passe oublié ?</a></div>
+      <button type="button" onclick="doLogin()" class="btn-primary" style="width:100%;padding:14px;font-size:0.95rem">Se connecter →</button>
+      <div style="text-align:center;margin-top:18px;font-size:0.85rem;color:#7a8aaa">Pas encore de compte ? <a style="color:#3d8bff;cursor:pointer" onclick="switchAuthTab('register')">S'inscrire</a></div>
+      <div style="margin-top:22px;padding-top:18px;border-top:1px solid rgba(26,111,255,0.12)">
+        <p style="text-align:center;font-size:0.72rem;color:#3d4f6e;margin-bottom:10px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Comptes de démonstration</p>
+        <div style="display:flex;gap:8px">
+          <button type="button" onclick="fillDemo('sender')" style="flex:1;padding:9px;background:rgba(26,111,255,0.08);border:1px solid rgba(26,111,255,0.22);border-radius:8px;color:#3d8bff;font-size:0.78rem;cursor:pointer;font-family:'DM Mono',monospace" onmouseover="this.style.background='rgba(26,111,255,0.18)'" onmouseout="this.style.background='rgba(26,111,255,0.08)'">🔐 Expéditeur</button>
+          <button type="button" onclick="fillDemo('intermediary')" style="flex:1;padding:9px;background:rgba(255,107,43,0.08);border:1px solid rgba(255,107,43,0.22);border-radius:8px;color:#ff6b2b;font-size:0.78rem;cursor:pointer;font-family:'DM Mono',monospace" onmouseover="this.style.background='rgba(255,107,43,0.18)'" onmouseout="this.style.background='rgba(255,107,43,0.08)'">💼 Intermédiaire</button>
+        </div>
+      </div>
+    </div>
+    <div id="panel-register" style="padding:28px 36px 32px;display:none">
+      <div style="text-align:center;margin-bottom:22px"><div style="font-size:2.2rem;margin-bottom:8px">🚀</div><h2 style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:4px">Créer un compte</h2><p style="color:#7a8aaa;font-size:0.85rem">Rejoignez CryptoBridge gratuitement</p></div>
+      <div style="margin-bottom:18px">
+        <label style="display:block;font-family:'DM Mono',monospace;font-size:0.72rem;color:#7a8aaa;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">Je suis un(e)…</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div id="role-sender" class="role-card active" onclick="selectRole('sender')"><div style="font-size:1.3rem;margin-bottom:4px">🔐</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem">Expéditeur</div><div style="font-size:0.72rem;color:#7a8aaa;margin-top:2px">Transaction bloquée</div></div>
+          <div id="role-intermediary" class="role-card" onclick="selectRole('intermediary')"><div style="font-size:1.3rem;margin-bottom:4px">💼</div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem">Intermédiaire</div><div style="font-size:0.72rem;color:#7a8aaa;margin-top:2px">Aider & gagner</div></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group" style="margin-bottom:14px"><label>Prénom *</label><input type="text" id="r-firstname" placeholder="Jean"><div class="error-msg" id="err-rfirstname">Requis.</div></div>
+        <div class="form-group" style="margin-bottom:14px"><label>Nom *</label><input type="text" id="r-lastname" placeholder="Dupont"><div class="error-msg" id="err-rlastname">Requis.</div></div>
+      </div>
+      <div class="form-group" style="margin-bottom:14px"><label>Email *</label><input type="email" id="r-email" placeholder="votre@email.com"><div class="error-msg" id="err-remail">Email invalide.</div></div>
+      <div class="form-group" style="margin-bottom:14px;position:relative"><label>Mot de passe *</label><input type="password" id="r-password" placeholder="8 caractères minimum" style="padding-right:44px" oninput="checkPwdStrength(this.value)"><button type="button" onclick="togglePwd('r-password',this)" style="position:absolute;right:12px;top:36px;background:none;border:none;color:#3d4f6e;cursor:pointer;font-size:1rem">👁</button><div id="pwd-strength-bar" style="height:3px;border-radius:2px;margin-top:8px;background:#0f1930;overflow:hidden"><div id="pwd-strength-fill" style="height:100%;width:0;transition:all 0.3s"></div></div><div id="pwd-strength-label" style="font-family:'DM Mono',monospace;font-size:0.7rem;color:#3d4f6e;margin-top:4px"></div><div class="error-msg" id="err-rpwd">8 caractères minimum.</div></div>
+      <div class="form-group" style="margin-bottom:14px;position:relative"><label>Confirmer le mot de passe *</label><input type="password" id="r-confirm" placeholder="••••••••" style="padding-right:44px"><button type="button" onclick="togglePwd('r-confirm',this)" style="position:absolute;right:12px;top:36px;background:none;border:none;color:#3d4f6e;cursor:pointer;font-size:1rem">👁</button><div class="error-msg" id="err-rconfirm">Les mots de passe ne correspondent pas.</div></div>
+      <div class="form-group" style="margin-bottom:16px"><label>Pays *</label><select id="r-country"><option value="">Sélectionner votre pays</option><option>Bénin</option><option>Côte d'Ivoire</option><option>Sénégal</option><option>Burkina Faso</option><option>Mali</option><option>Niger</option><option>Togo</option><option>Cameroun</option><option>Guinea</option><option>Madagascar</option><option>Maroc</option><option>Algérie</option><option>Tunisie</option><option>Canada</option><option>USA</option><option>France</option><option>Belgique</option><option>Suisse</option><option>Autre</option></select><div class="error-msg" id="err-rcountry">Requis.</div></div>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:16px;font-size:0.82rem;color:#7a8aaa"><input type="checkbox" id="r-terms" style="margin-top:3px;flex-shrink:0;accent-color:#1a6fff"><span>J'accepte les <a style="color:#3d8bff">Conditions d'utilisation</a> et la <a style="color:#3d8bff">Politique de confidentialité</a>.</span></label>
+      <div class="error-msg" id="err-rterms" style="margin-top:-10px;margin-bottom:14px">Vous devez accepter les CGU.</div>
+      <button type="button" onclick="doRegister()" class="btn-primary" style="width:100%;padding:14px;font-size:0.95rem">Créer mon compte →</button>
+      <div style="text-align:center;margin-top:14px;font-size:0.85rem;color:#7a8aaa">Déjà inscrit ? <a style="color:#3d8bff;cursor:pointer" onclick="switchAuthTab('login')">Se connecter</a></div>
+    </div>
+    <div id="panel-forgot" style="padding:36px;display:none">
+      <button type="button" onclick="switchAuthTab('login')" style="background:none;border:none;color:#7a8aaa;cursor:pointer;font-size:0.85rem;margin-bottom:20px;display:flex;align-items:center;gap:6px">← Retour</button>
+      <div style="text-align:center;margin-bottom:28px"><div style="font-size:2.4rem;margin-bottom:10px">📧</div><h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:6px">Mot de passe oublié</h2><p style="color:#7a8aaa;font-size:0.88rem">Entrez votre email pour recevoir un lien.</p></div>
+      <div id="forgot-success" style="display:none;text-align:center;padding:20px"><div style="font-size:2.5rem;margin-bottom:12px">✅</div><p style="color:#00e676;font-weight:600">Email envoyé !</p><p style="color:#7a8aaa;font-size:0.85rem;margin-top:6px">Vérifiez votre boîte et les spams.</p></div>
+      <div id="forgot-form-inner"><div class="form-group"><label>Adresse email</label><input type="email" id="f-email" placeholder="votre@email.com"></div><button type="button" onclick="doForgot()" class="btn-primary" style="width:100%;padding:14px">Envoyer le lien</button></div>
+    </div>
+  </div>
+</div>
+
+<a id="whatsapp-btn" href="https://wa.me/22901234567?text=Bonjour+CryptoBridge,+j'ai+besoin+d'aide" target="_blank" title="Contacter via WhatsApp">💬</a>
+
+<button id="chat-btn" onclick="toggleChat()">
+  🤖
+  <div class="chat-notif">1</div>
+</button>
+
+<div id="chat-popup">
+  <div class="chat-header">
+    <div class="chat-header-avatar">🤖</div>
+    <div class="chat-header-info">
+      <h4>Assistant CryptoBridge</h4>
+      <span>● En ligne</span>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-messages" id="chat-messages">
+    <div class="msg bot">
+      <div class="msg-bubble">Bonjour ! 👋 Je suis l'assistant CryptoBridge. Comment puis-je vous aider avec votre transaction crypto ?</div>
+      <div class="msg-time">Maintenant</div>
+    </div>
+  </div>
+  <div class="chat-suggestions" id="chat-suggestions">
+    <div class="suggestion-chip" onclick="sendSuggestion(this)">Comment ça marche ?</div>
+    <div class="suggestion-chip" onclick="sendSuggestion(this)">Débloquer une transaction</div>
+    <div class="suggestion-chip" onclick="sendSuggestion(this)">Convertir BTC en euros</div>
+    <div class="suggestion-chip" onclick="sendSuggestion(this)">Mes actions récentes</div>
+  </div>
+  <div class="chat-input-bar">
+    <input class="chat-input" id="chat-input" placeholder="Posez votre question…" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<script>
+
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const intermediaries = [
+  {id:1,name:'Marc D.',country:'France',type:'bancaire',platform:'Binance, Kraken',cryptos:['BTC','USDT','ETH'],commission:'20–25%',commissionMax:25,rating:4.9,reviews:87,color:'#1a6fff',emoji:'M',description:"Intermédiaire expérimenté en France. Virement SEPA sous 24–48h.",history:"112 opérations · Membre depuis 2021 · Vérifié",blocages:["Délais SEPA en décembre","Certaines banques FR demandent justificatifs"],avis:[{user:"Sophie M.",note:5,text:"Excellent, professionnel et rapide.",date:"15 Jan 2024"},{user:"Kouassi A.",note:5,text:"Parfait du début à la fin.",date:"08 Jan 2024"},{user:"Jean P.",note:4,text:"Bonne expérience globale.",date:"22 Déc 2023"}]},
+  {id:2,name:"Aïcha K.",country:"Côte d'Ivoire",type:'both',platform:'Binance, Orange Money',cryptos:['USDT','BNB','BTC'],commission:'25–30%',commissionMax:30,rating:4.7,reviews:54,color:'#ff6b2b',emoji:'A',description:"Spécialiste virements AOF via Orange Money, MTN et virement UEMOA.",history:"67 opérations · Membre depuis 2022 · Vérifiée",blocages:["Restrictions MTN >500k XOF"],avis:[{user:"Moussa D.",note:5,text:"Très efficace. Orange Money rapide !",date:"20 Jan 2024"},{user:"Fatou S.",note:4,text:"Fiable et sérieux.",date:"11 Jan 2024"}]},
+  {id:3,name:'David L.',country:'Canada',type:'crypto',platform:'Coinbase, Kraken',cryptos:['BTC','ETH','USDC','SOL'],commission:'20–22%',commissionMax:22,rating:4.8,reviews:42,color:'#8b5cf6',emoji:'D',description:"Expert crypto Canada depuis 2019. Stablecoins préférés.",history:"55 opérations · Membre depuis 2022 · Vérifié",blocages:["Délais hors heures bancaires EST"],avis:[{user:"Alex R.",note:5,text:"Compétent sur les stablecoins.",date:"18 Jan 2024"}]},
+  {id:4,name:'Fatima O.',country:'Maroc',type:'bancaire',platform:'Binance, CIH Bank',cryptos:['USDT','BTC','ETH'],commission:'28–35%',commissionMax:35,rating:4.5,reviews:31,color:'#00e5ff',emoji:'F',description:"Spécialiste Maghreb. Virements MAD, DZD ou EUR.",history:"38 opérations · Membre depuis 2023 · Vérifiée",blocages:["Office des changes : justificatifs >10k MAD"],avis:[{user:"Karim B.",note:5,text:"Parfaite pour le Maghreb.",date:"05 Jan 2024"},{user:"Nadia Z.",note:4,text:"Léger délai conformité.",date:"28 Déc 2023"}]},
+  {id:5,name:'Pierre V.',country:'Belgique',type:'bancaire',platform:'Kraken, Revolut',cryptos:['BTC','ETH','USDT','USDC'],commission:'18–22%',commissionMax:22,rating:4.9,reviews:96,color:'#ffd166',emoji:'P',description:"Top intermédiaire belge. Commissions les plus basses, 7j/7.",history:"124 opérations · Membre depuis 2020 · Vérifié · Top ⭐",blocages:["Aucun blocage sur les 6 derniers mois"],avis:[{user:"Isabelle M.",note:5,text:"Le meilleur de la plateforme.",date:"22 Jan 2024"},{user:"Thomas B.",note:5,text:"Commissions basses, service impeccable.",date:"15 Jan 2024"}]},
+  {id:6,name:'Ibrahim S.',country:'Sénégal',type:'bancaire',platform:'Ecobank, Wave',cryptos:['USDT','BTC','XRP'],commission:'23–28%',commissionMax:28,rating:4.7,reviews:39,color:'#00e676',emoji:'I',description:"Virements Wave, Ecobank BCEAO et mobile money. Réseau étendu AOF.",history:"47 opérations · Membre depuis 2023 · Vérifié",blocages:["Limites Wave : max 1M XOF par virement"],avis:[{user:"Aminata D.",note:5,text:"Wave ultrarapide !",date:"19 Jan 2024"},{user:"Omar B.",note:4,text:"Sérieux, 24h pour virements bancaires.",date:"10 Jan 2024"}]},
+  {id:7,name:'Awa T.',country:"Côte d'Ivoire",type:'crypto',platform:'Binance, Bybit',cryptos:['USDT','USDC','BNB','ETH'],commission:'26–30%',commissionMax:30,rating:4.6,reviews:28,color:'#e040fb',emoji:'Aw',description:"Basée à Abidjan. Reçoit USDT/USDC sur Binance/Bybit, reverse via Wave, Moov Money ou SGBCI.",history:"33 opérations · Membre depuis 2023 · Vérifiée",blocages:["Délais Bybit withdrawal : 1–2h aux heures de pointe"],avis:[{user:"Koffi A.",note:5,text:"USDT convertis en Wave en moins de 2h !",date:"21 Jan 2024"},{user:"Mariam S.",note:4,text:"Très pro, explique bien.",date:"14 Jan 2024"}]}
+];
+
+// ══════════════════════════════════════════════
+// INTERMEDIARY LIST═══════════════════════════════════
+const intermediaries = [
+  {
+    id: 1, name: 'Marc D.', country: 'France', type: 'bancaire', platform: 'Binance, Kraken',
+    cryptos: ['BTC', 'USDT', 'ETH'], commission: '20–25%', commissionMax: 25,
+    rating: 4.9, reviews: 87, color: '#1a6fff', emoji: 'M',
+    description: "Intermédiaire expérimenté basé en France, spécialisé dans les transactions BTC et USDT. Virement bancaire SEPA sous 24–48h.",
+    history: "112 opérations réalisées · Membre depuis 2021 · Vérifié",
+    blocages: ["Quelques délais SEPA en période festive (décembre)", "Certaines banques françaises demandent justificatifs"],
+    avis: [
+      { user: "Sophie M.", note: 5, text: "Excellent intermédiaire, très professionnel et rapide. Transaction réglée en moins de 24h.", date: "15 Jan 2024" },
+      { user: "Kouassi A.", note: 5, text: "Parfait du début à la fin. Communication claire et virement ponctuel.", date: "08 Jan 2024" },
+      { user: "Jean P.", note: 4, text: "Bonne expérience globale. Petit délai supplémentaire lié à ma banque, mais Marc a bien géré.", date: "22 Déc 2023" }
+    ]
+  },
+  {
+    id: 2, name: 'Aïcha K.', country: 'Côte d\'Ivoire', type: 'both', platform: 'Binance, Orange Money',
+    cryptos: ['USDT', 'BNB', 'BTC'], commission: '25–30%', commissionMax: 30,
+    rating: 4.7, reviews: 54, color: '#ff6b2b', emoji: 'A',
+    description: "Intermédiaire basée en Côte d'Ivoire. Spécialiste des virements en Afrique de l'Ouest via Orange Money, MTN Money et virement bancaire UEMOA.",
+    history: "67 opérations · Membre depuis 2022 · Vérifiée",
+    blocages: ["Quelques restrictions MTN sur montants >500k XOF"],
+    avis: [
+      { user: "Moussa D.", note: 5, text: "Très efficace pour les transferts en Afrique de l'Ouest. Orange Money rapide !", date: "20 Jan 2024" },
+      { user: "Fatou S.", note: 4, text: "Service fiable. Commissions un peu hautes mais travail sérieux.", date: "11 Jan 2024" }
+    ]
+  },
+  {
+    id: 3, name: 'David L.', country: 'Canada', type: 'crypto', platform: 'Coinbase, Kraken',
+    cryptos: ['BTC', 'ETH', 'USDC', 'SOL'], commission: '20–22%', commissionMax: 22,
+    rating: 4.8, reviews: 42, color: '#8b5cf6', emoji: 'D',
+    description: "Intermédiaire canadien, disponible pour les conversions en CAD et USD. Expert crypto depuis 2019, travaille avec des stablecoins pour limiter la volatilité.",
+    history: "55 opérations · Membre depuis 2022 · Vérifié",
+    blocages: ["Délais possibles en dehors des heures bancaires EST"],
+    avis: [
+      { user: "Alex R.", note: 5, text: "Très compétent sur les stablecoins. Frais très compétitifs pour le Canada.", date: "18 Jan 2024" }
+    ]
+  },
+  {
+    id: 4, name: 'Fatima O.', country: 'Maroc', type: 'bancaire', platform: 'Binance, CIH Bank',
+    cryptos: ['USDT', 'BTC', 'ETH'], commission: '28–35%', commissionMax: 35,
+    rating: 4.5, reviews: 31, color: '#00e5ff', emoji: 'F',
+    description: "Intermédiaire au Maroc, spécialisée dans les transactions pour la région Maghreb. Virement en MAD, DZD ou EUR possible.",
+    history: "38 opérations · Membre depuis 2023 · Vérifiée",
+    blocages: ["Office des changes marocain : justificatifs parfois requis pour >10k MAD"],
+    avis: [
+      { user: "Karim B.", note: 5, text: "Parfaite pour les transactions Maghreb. Très à l'écoute.", date: "05 Jan 2024" },
+      { user: "Nadia Z.", note: 4, text: "Professionnel, petit délai supplémentaire pour la conformité bancaire.", date: "28 Déc 2023" }
+    ]
+  },
+  {
+    id: 5, name: 'Pierre V.', country: 'Belgique', type: 'bancaire', platform: 'Kraken, Revolut',
+    cryptos: ['BTC', 'ETH', 'USDT', 'USDC'], commission: '18–22%', commissionMax: 22,
+    rating: 4.9, reviews: 96, color: '#ffd166', emoji: 'P',
+    description: "Intermédiaire belge expérimenté, commissions parmi les plus basses du marché. Disponible 7j/7. SEPA express disponible.",
+    history: "124 opérations · Membre depuis 2020 · Vérifié · Top Intermédiaire",
+    blocages: ["Aucun blocage déclaré sur les 6 derniers mois"],
+    avis: [
+      { user: "Isabelle M.", note: 5, text: "Le meilleur intermédiaire de la plateforme. Réactif, honnête et professionnel.", date: "22 Jan 2024" },
+      { user: "Thomas B.", note: 5, text: "Commissions basses et service impeccable. Recommandé à 100%.", date: "15 Jan 2024" }
+    ]
+  },
+  {
+    id: 6, name: 'Ibrahim S.', country: 'Sénégal', type: 'both', platform: 'Binance, Wave',
+    cryptos: ['USDT', 'BTC', 'XRP'], commission: '25–30%', commissionMax: 30,
+    rating: 4.6, reviews: 28, color: '#00e676', emoji: 'I',
+    description: "Intermédiaire sénégalais spécialisé dans les virements Wave, Orange Money et virements bancaires BCEAO. Large réseau en Afrique de l'Ouest.",
+    history: "33 opérations · Membre depuis 2023 · Vérifié",
+    blocages: ["Limites Wave : max 1M XOF par opération"],
+    avis: [
+      { user: "Aminata D.", note: 5, text: "Très bon service pour l'Afrique de l'Ouest. Wave ultrarapide !", date: "19 Jan 2024" }
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goPage(id) {
+  if (id === 'dashboard' && typeof currentUser !== 'undefined' && !currentUser) {
+    openAuth('login'); return;
+  }
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'list') renderList(intermediaries);
+}
+
+// ══════════════════════════════════════════════
+// INTERMEDIARY LIST
+// ══════════════════════════════════════════════
+function renderList(data) {
+  const grid = document.getElementById('inter-grid');
+  if (!grid) return;
+  grid.innerHTML = data.map(i => `
+    <div class="inter-card" onclick="showDetail(${i.id})">
+      <div class="inter-card-header">
+        <div class="inter-avatar" style="background:${i.color}22;color:${i.color}">${i.emoji}</div>
+        <div class="inter-info">
+          <div class="inter-name">${i.name}</div>
+          <div class="inter-country">📍 ${i.country}</div>
+        </div>
+        <div class="badge ${i.type === 'bancaire' ? 'badge-blue' : i.type === 'crypto' ? 'badge-violet' : 'badge-green'}">
+          ${i.type === 'bancaire' ? '🏦 Bancaire' : i.type === 'crypto' ? '🔐 Crypto' : '🔄 Les deux'}
+        </div>
+      </div>
+      <div class="inter-chips">
+        ${i.cryptos.map(c => `<span class="badge badge-orange">${c}</span>`).join('')}
+        <span class="badge badge-yellow">💰 ${i.commission}</span>
+      </div>
+      <div class="inter-stats">
+        <div>
+          <div class="inter-stat-label">Note</div>
+          <div class="inter-stat-val">${i.rating} <span class="stars">★</span></div>
+        </div>
+        <div>
+          <div class="inter-stat-label">Avis</div>
+          <div class="inter-stat-val">${i.reviews}</div>
+        </div>
+        <div>
+          <div class="inter-stat-label">Plateforme</div>
+          <div class="inter-stat-val" style="font-size:0.8rem;font-family:var(--font-mono)">${i.platform.split(',')[0]}</div>
+        </div>
+      </div>
+      <button class="btn-primary" style="width:100%;padding:11px" onclick="event.stopPropagation();showDetail(${i.id})">Contacter / Candidater →</button>
+    </div>
+  `).join('');
+}
+
+function filterList() {
+  const country = document.getElementById('f-country').value;
+  const crypto = document.getElementById('f-crypto').value;
+  const type = document.getElementById('f-type').value;
+  const commMax = document.getElementById('f-commission').value;
+
+  let filtered = intermediaries.filter(i => {
+    if (country && i.country !== country) return false;
+    if (crypto && !i.cryptos.includes(crypto)) return false;
+    if (type && i.type !== type && !(type === 'bancaire' && i.type === 'both') && !(type === 'crypto' && i.type === 'both')) return false;
+    if (commMax && i.commissionMax > parseInt(commMax)) return false;
+    return true;
+  });
+
+  renderList(filtered);
+}
+
+function showDetail(id) {
+  const i = intermediaries.find(x => x.id === id);
+  if (!i) return;
+
+  const starsHtml = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-hero">
+      <div class="detail-avatar" style="background:${i.color}22;color:${i.color};font-size:2.2rem">${i.emoji}</div>
+      <div class="detail-info">
+        <h1>${i.name}</h1>
+        <div style="color:var(--text-dim);font-size:0.9rem;margin-bottom:6px">📍 ${i.country} · ${i.history}</div>
+        <div class="detail-meta">
+          <span class="badge ${i.type === 'bancaire' ? 'badge-blue' : i.type === 'crypto' ? 'badge-violet' : 'badge-green'}">${i.type === 'bancaire' ? '🏦 Bancaire' : i.type === 'crypto' ? '🔐 Crypto' : '🔄 Bancaire + Crypto'}</span>
+          ${i.cryptos.map(c => `<span class="badge badge-orange">${c}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-box">
+        <div class="info-box-label">Commission typique</div>
+        <div class="info-box-val" style="color:var(--yellow)">${i.commission}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Note moyenne</div>
+        <div class="info-box-val">${i.rating} <span style="color:var(--yellow);font-size:0.9rem">★</span> (${i.reviews} avis)</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Plateformes</div>
+        <div class="info-box-val" style="font-size:0.9rem">${i.platform}</div>
+      </div>
+      <div class="info-box">
+        <div class="info-box-label">Pays du compte</div>
+        <div class="info-box-val" style="font-size:0.95rem">📍 ${i.country}</div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px">
+      <h3 style="font-family:var(--font-head);font-weight:700;margin-bottom:12px">À propos</h3>
+      <p style="color:var(--text-dim);font-size:0.9rem;line-height:1.7">${i.description}</p>
+    </div>
+
+    <div style="background:rgba(255,107,43,0.05);border:1px solid rgba(255,107,43,0.15);border-radius:14px;padding:20px;margin-bottom:24px">
+      <h3 style="font-family:var(--font-head);font-weight:700;margin-bottom:10px;font-size:0.95rem">⚠️ Blocages déclarés</h3>
+      ${i.blocages.map(b => `<p style="color:#ffaa80;font-size:0.85rem;margin-bottom:4px">• ${b}</p>`).join('')}
+    </div>
+
+    <h3 style="font-family:var(--font-head);font-weight:700;margin-bottom:16px">Avis clients</h3>
+    <div class="reviews-list">
+      ${i.avis.map(a => `
+        <div class="review-item">
+          <div class="review-header">
+            <span style="font-weight:600">${a.user}</span>
+            <div class="stars">${starsHtml(a.note)}</div>
+          </div>
+          <p class="review-text">${a.text}</p>
+          <div class="review-author" style="margin-top:8px">${a.date}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px">
+      <h3 style="font-family:var(--font-head);font-weight:700;margin-bottom:16px">✉️ Envoyer un message</h3>
+      <div class="form-group">
+        <label>Votre message</label>
+        <textarea placeholder="Décrivez votre demande : montant, type de crypto, pays, type de blocage…" style="min-height:120px"></textarea>
+      </div>
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="this.textContent='Message envoyé ✓';this.style.background='var(--green)';this.disabled=true">Envoyer le message →</button>
+    </div>
+  `;
+
+  goPage('detail');
+}
+
+// ══════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════
+function switchTab(btn, tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ['tab-demandes', 'tab-messages', 'tab-avis'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = id === tabId ? 'block' : 'none';
+  });
+}
+
+// ══════════════════════════════════════════════
+// FAQ
+// ══════════════════════════════════════════════
+function toggleFaq(el) {
+  const item = el.parentElement;
+  item.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════
+// FORM VALIDATION
+// ══════════════════════════════════════════════
+function showErr(id, show) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = show ? 'block' : 'none';
+  const input = el.previousElementSibling;
+  if (input) {
+    if (show) input.classList.add('input-error');
+    else input.classList.remove('input-error');
+  }
+}
+
+function isValidUrl(s) {
+  try { new URL(s); return true; } catch { return false; }
+}
+
+// sender-form submit handled by step system
+document.getElementById('DISABLED_sender-form')?.addEventListener('submit', function(e) {
+  e.preventDefault();
+  let valid = true;
+
+  const amount = document.getElementById('s-amount').value;
+  if (!amount || parseFloat(amount) <= 0) { showErr('err-amount', true); valid = false; } else showErr('err-amount', false);
+
+  const crypto = document.getElementById('s-crypto').value;
+  if (!crypto) { showErr('err-crypto', true); valid = false; } else showErr('err-crypto', false);
+
+  const country = document.getElementById('s-country').value;
+  if (!country) { showErr('err-country', true); valid = false; } else showErr('err-country', false);
+
+  const block = document.getElementById('s-block').value;
+  if (!block) { showErr('err-block', true); valid = false; } else showErr('err-block', false);
+
+  const comm = document.getElementById('s-commission').value;
+  if (!comm || parseFloat(comm) < 5 || parseFloat(comm) > 50) { showErr('err-commission', true); valid = false; } else showErr('err-commission', false);
+
+  const txlink = document.getElementById('s-txlink').value;
+  if (!txlink || !isValidUrl(txlink)) { showErr('err-txlink', true); valid = false; } else showErr('err-txlink', false);
+
+  if (valid) {
+    document.getElementById('sender-form').style.display = 'none';
+    document.getElementById('sender-success').style.display = 'block';
+  }
+});
+
+document.getElementById('trusted-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  let valid = true;
+
+  const name = document.getElementById('t-name').value.trim();
+  if (!name) { showErr('err-tname', true); valid = false; } else showErr('err-tname', false);
+
+  const email = document.getElementById('t-email').value;
+  if (!email || !email.includes('@')) { showErr('err-temail', true); valid = false; } else showErr('err-temail', false);
+
+  const rectype = document.getElementById('t-rectype').value;
+  if (!rectype) { showErr('err-trectype', true); valid = false; } else showErr('err-trectype', false);
+
+  const country = document.getElementById('t-country').value;
+  if (!country) { showErr('err-tcountry', true); valid = false; } else showErr('err-tcountry', false);
+
+  const comm = document.getElementById('t-commission').value;
+  if (!comm || parseFloat(comm) < 5 || parseFloat(comm) > 50) { showErr('err-tcommission', true); valid = false; } else showErr('err-tcommission', false);
+
+  if (valid) {
+    document.getElementById('trusted-form').style.display = 'none';
+    document.getElementById('trusted-success').style.display = 'block';
+  }
+});
+
+document.getElementById('contact-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  let valid = true;
+
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { showErr('err-cname', true); valid = false; } else showErr('err-cname', false);
+
+  const email = document.getElementById('c-email').value;
+  if (!email || !email.includes('@')) { showErr('err-cemail', true); valid = false; } else showErr('err-cemail', false);
+
+  const msg = document.getElementById('c-message').value.trim();
+  if (!msg) { showErr('err-cmessage', true); valid = false; } else showErr('err-cmessage', false);
+
+  if (valid) {
+    document.getElementById('contact-form').style.display = 'none';
+    document.getElementById('contact-success').style.display = 'block';
+  }
+});
+
+// ══════════════════════════════════════════════
+// CHATBOT
+// ══════════════════════════════════════════════
+const BOT_RESPONSES = {
+  'comment ça marche': "CryptoBridge met en relation des personnes avec des transactions crypto bloquées et des intermédiaires de confiance. 1️⃣ Déposez votre demande → 2️⃣ Choisissez un intermédiaire → 3️⃣ Négociez la commission → 4️⃣ Décaissez vos fonds. Nous ne gérons aucun fonds directement.",
+  'plateforme': "La plateforme permet la mise en relation entre expéditeurs (transactions bloquées) et intermédiaires (compte bancaire ou crypto disponible). L'intermédiaire reçoit les fonds, prélève sa commission (20–35%), et reverse le reste.",
+  'débloquer': "Pour débloquer une transaction : si c'est un problème KYC, soumettez vos documents sur la plateforme concernée. Si c'est un blocage bancaire, essayez une néobanque (Revolut, N26). Si la plateforme est restreinte dans votre pays, un intermédiaire peut recevoir les fonds depuis un pays compatible.",
+  'transaction': "Une transaction crypto bloquée signifie généralement que les fonds sont visibles sur l'explorer blockchain mais ne peuvent pas être décaissés. Les causes courantes : KYC non validé, compte bancaire bloqué, plateforme inaccessible dans votre pays.",
+  'bitcoin en euros': "Pour convertir Bitcoin en euros : 1) Inscrivez-vous sur une plateforme réglementée (Binance, Coinbase, Kraken) · 2) Validez votre identité (KYC) · 3) Envoyez vos BTC · 4) Vendez-les · 5) Retirez en euros sur votre compte bancaire. ⚠️ En France : flat tax 30% sur les plus-values.",
+  'convertir': "Pour convertir des cryptos en euros ou en monnaie locale : utilisez une plateforme d'échange réglementée, un distributeur Bitcoin, ou faites appel à un intermédiaire CryptoBridge qui peut recevoir vos crypto et vous reverser l'équivalent en fiat, moins sa commission.",
+  'compte bancaire': "Si votre banque bloque un virement crypto : 1) Expliquez l'origine des fonds à votre banque · 2) Essayez une néobanque (Revolut, Wise) · 3) Fractionnez le virement · 4) Utilisez un intermédiaire CryptoBridge qui peut reverser via d'autres canaux (mobile money, etc.).",
+  'bloqué': "Si vous avez un blocage pendant une opération : rendez-vous dans votre tableau de bord → 'Mes opérations' → 'Déclarer un blocage'. Décrivez le problème sans inclure de clés privées ni codes de sécurité.",
+  'signaler': "Pour signaler un blocage : tableau de bord → opération concernée → 'Déclarer un blocage'. Vous pouvez aussi contacter notre support via la page Contact. Ne partagez jamais vos clés privées ou codes 2FA.",
+  'risques': "⚠️ Principaux risques : 1) Arnaque par faux intermédiaire → vérifiez toujours les avis et l'historique · 2) Volatilité crypto → préférez les stablecoins · 3) Risque légal → vérifiez la réglementation de votre pays · 4) Blocage bancaire → préparez vos justificatifs.",
+  'commission': "La commission typique est de 20–35% du montant. L'expéditeur propose une commission lors de sa demande, et l'intermédiaire peut accepter ou négocier. Plus la commission est attractive, plus vous trouverez rapidement un intermédiaire disponible.",
+  'kyc': "KYC signifie 'Know Your Customer' (Connaissance du client). C'est la procédure de vérification d'identité requise par les plateformes pour se conformer aux réglementations anti-blanchiment. Vous devrez fournir : pièce d'identité + justificatif de domicile de moins de 3 mois.",
+  'usdt': "USDT est un stablecoin (valeur ≈ 1 USD). Il est recommandé pour éviter la volatilité lors des transactions. Très utilisé sur CryptoBridge car sa valeur reste stable pendant l'opération.",
+  'actions récentes': "Vos actions récentes sont dans votre <strong style='color:#3d8bff;cursor:pointer' onclick='toggleChat();goPage(\"dashboard\")'>tableau de bord →</strong>.",
+  'tableau de bord': "Consultez votre tableau de bord pour demandes, messages et actions récentes. <strong style='color:#3d8bff;cursor:pointer' onclick='toggleChat();goPage(\"dashboard\")'>Ouvrir →</strong>",
+  'default': "Je suis là pour vous aider ! Vous pouvez me poser des questions sur : le fonctionnement de la plateforme, comment débloquer une transaction, convertir des cryptos, les risques, les commissions, ou tout autre sujet lié à vos transactions crypto. 💬"
+};
+
+function getBotResponse(msg) {
+  const m = msg.toLowerCase();
+  for (const [key, resp] of Object.entries(BOT_RESPONSES)) {
+    if (m.includes(key)) return resp;
+  }
+  return BOT_RESPONSES.default;
+}
+
+function getTime() {
+  return new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMessage(text, who) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + who;
+  div.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-time">${getTime()}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg bot';
+  div.id = 'typing-ind';
+  div.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-ind');
+  if (el) el.remove();
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, 'user');
+  input.value = '';
+
+  // Remove suggestion chips
+  document.getElementById('chat-suggestions').innerHTML = '';
+
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    addMessage(getBotResponse(text), 'bot');
+    // Remove notif
+    const notif = document.querySelector('#chat-btn .chat-notif');
+    if (notif) notif.remove();
+  }, 800 + Math.random() * 600);
+}
+
+function sendSuggestion(el) {
+  const text = el.textContent;
+  document.getElementById('chat-input').value = text;
+  sendChat();
+}
+
+function toggleChat() {
+  const popup = document.getElementById('chat-popup');
+  popup.classList.toggle('open');
+  const notif = document.querySelector('#chat-btn .chat-notif');
+  if (popup.classList.contains('open') && notif) notif.remove();
+}
+
+
+// ══════════════════════════════════════════════
+// // FIX LÉGAL — Contenu des modales légales
+// ══════════════════════════════════════════════
+const LEGAL_CONTENT = {
+  mentions: {
+    title: '📋 Mentions légales',
+    body: `<h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:16px">Éditeur du site</h4>
+<p><strong style="color:#e8edf8">Raison sociale :</strong> CryptoBridge SARL</p>
+<p><strong style="color:#e8edf8">Siège social :</strong> Quartier Cadjehoun, Avenue Jean Paul II, Cotonou, République du Bénin</p>
+<p><strong style="color:#e8edf8">Directeur de la publication :</strong> Mikaël BOHIME</p>
+<p><strong style="color:#e8edf8">Email :</strong> contact@cryptobridge.io</p>
+<p><strong style="color:#e8edf8">RCCM :</strong> BJ-COT-2023-B-12847</p>
+<p><strong style="color:#e8edf8">Téléphone :</strong> +229 01 23 45 67</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:12px">Hébergement</h4>
+<p>Vercel Inc. — 340 Pine Street, Suite 701, San Francisco, CA 94104, USA.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:12px">Activité</h4>
+<p>CryptoBridge est une plateforme de <strong style="color:#e8edf8">mise en relation uniquement</strong>. La société ne gère aucun fonds, ne conserve aucune clé privée, et n'exerce pas d'activité de prestation de services de paiement au sens de la réglementation BCEAO. Les transactions s'opèrent directement entre les utilisateurs.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:1rem;margin-bottom:12px">Propriété intellectuelle</h4>
+<p>L'ensemble du contenu (textes, images, logotype) appartient à CryptoBridge SARL. Toute reproduction est interdite sans autorisation préalable écrite.</p>`
+  },
+  cgu: {
+    title: "📜 Conditions Générales d'Utilisation",
+    body: `<p style="margin-bottom:16px"><em>Dernière mise à jour : 22 janvier 2024</em></p>
+<h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Art. 1 — Objet</h4>
+<p>CryptoBridge est une plateforme numérique de mise en relation entre des Expéditeurs (transactions crypto bloquées) et des Intermédiaires (compte bancaire ou portefeuille crypto). CryptoBridge n'intervient à aucun moment dans les flux financiers entre utilisateurs.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Art. 2 — Inscription</h4>
+<p>L'accès nécessite un compte avec email valide et mot de passe sécurisé. L'utilisateur s'engage à fournir des informations exactes. Tout compte frauduleux sera suspendu immédiatement sans préavis.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Art. 3 — Responsabilités</h4>
+<p>CryptoBridge agit en qualité d'intermédiaire technique. La plateforme ne garantit pas la solvabilité ni la bonne foi des Intermédiaires. L'utilisateur assume l'entière responsabilité de ses transactions.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Art. 4 — Interdictions</h4>
+<p>Strictement interdit : blanchiment de capitaux, financement du terrorisme, fraude fiscale, usurpation d'identité. CryptoBridge se réserve le droit de signaler aux autorités toute activité suspecte.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Art. 5 — Commission</h4>
+<p>CryptoBridge ne prélève pas de commission sur les transactions. Les commissions sont librement négociées entre utilisateurs (généralement 18–35%). La plateforme se réserve le droit d'introduire des frais avec préavis de 30 jours.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Art. 6 — Modification</h4>
+<p>Les CGU peuvent être modifiées à tout moment. Les utilisateurs seront notifiés par email 15 jours avant toute modification substantielle. L'utilisation continue de la plateforme vaut acceptation des nouvelles CGU.</p>`
+  },
+  confidentialite: {
+    title: '🔒 Politique de confidentialité (RGPD)',
+    body: `<p style="margin-bottom:16px"><em>Conformément au RGPD et à la loi n°2017-20 du Bénin portant code du numérique.</em></p>
+<h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Données collectées</h4>
+<p>CryptoBridge collecte : nom, prénom, email, pays de résidence, rôle, historique des demandes et messages. <strong style="color:#e8edf8">Aucune clé privée ni donnée bancaire sensible</strong> n'est stockée sur nos serveurs.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Finalités</h4>
+<p>Gestion des comptes, mise en relation, prévention de la fraude, amélioration du service, communication transactionnelle.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Durée de conservation</h4>
+<p>Données de compte : durée d'activité + 3 ans. Données de mise en relation : 5 ans (conformité réglementaire).</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Vos droits</h4>
+<p>Droits d'accès, rectification, effacement, portabilité, opposition. Contact : <strong style="color:#3d8bff">dpo@cryptobridge.io</strong> ou par courrier à notre siège de Cotonou.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Transferts</h4>
+<p>Données hébergées par Vercel (USA) avec clauses contractuelles types conformes au RGPD. Aucune donnée n'est vendue à des tiers.</p>`
+  },
+  cookies: {
+    title: '🍪 Politique de cookies',
+    body: `<h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Cookies utilisés</h4>
+<table style="width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px">
+  <thead><tr style="border-bottom:1px solid rgba(26,111,255,0.15)">
+    <th style="padding:8px 12px;text-align:left;color:#7a8aaa">Nom</th>
+    <th style="padding:8px 12px;text-align:left;color:#7a8aaa">Type</th>
+    <th style="padding:8px 12px;text-align:left;color:#7a8aaa">Durée</th>
+    <th style="padding:8px 12px;text-align:left;color:#7a8aaa">Finalité</th>
+  </tr></thead>
+  <tbody>
+    <tr style="border-bottom:1px solid rgba(26,111,255,0.08)"><td style="padding:8px 12px;color:#e8edf8">cb_session</td><td style="padding:8px 12px"><span style="color:#00e676">Essentiel</span></td><td style="padding:8px 12px">Session</td><td style="padding:8px 12px">Maintien de la connexion</td></tr>
+    <tr style="border-bottom:1px solid rgba(26,111,255,0.08)"><td style="padding:8px 12px;color:#e8edf8">cb_prefs</td><td style="padding:8px 12px"><span style="color:#00e676">Essentiel</span></td><td style="padding:8px 12px">1 an</td><td style="padding:8px 12px">Préférences utilisateur</td></tr>
+    <tr style="border-bottom:1px solid rgba(26,111,255,0.08)"><td style="padding:8px 12px;color:#e8edf8">cb_analytics</td><td style="padding:8px 12px"><span style="color:#ffd166">Analytique</span></td><td style="padding:8px 12px">13 mois</td><td style="padding:8px 12px">Statistiques anonymisées</td></tr>
+    <tr><td style="padding:8px 12px;color:#e8edf8">cb_security</td><td style="padding:8px 12px"><span style="color:#00e676">Essentiel</span></td><td style="padding:8px 12px">Session</td><td style="padding:8px 12px">Protection CSRF</td></tr>
+  </tbody>
+</table>
+<br/><p style="padding:12px 16px;background:rgba(0,230,118,0.06);border:1px solid rgba(0,230,118,0.15);border-radius:8px;color:#00e676;font-size:0.82rem">✅ CryptoBridge n'utilise <strong>aucun cookie publicitaire</strong> ni tracker tiers. Seuls les cookies strictement nécessaires sont actifs par défaut.</p>
+<br/><h4 style="color:#e8edf8;font-family:'Syne',sans-serif;font-size:0.95rem;margin-bottom:10px">Gestion</h4>
+<p>Vous pouvez paramétrer votre navigateur pour refuser les cookies non essentiels. Contact : <strong style="color:#3d8bff">cookies@cryptobridge.io</strong></p>`
+  }
+};
+
+function openLegal(type) {
+  const c = LEGAL_CONTENT[type]; if(!c) return;
+  document.getElementById('legal-title').textContent = c.title;
+  document.getElementById('legal-body').innerHTML = c.body;
+  const ov = document.getElementById('legal-overlay');
+  ov.style.cssText = 'display:flex !important;position:fixed;inset:0;background:rgba(5,8,16,0.92);backdrop-filter:blur(16px);z-index:8500;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto';
+  document.body.style.overflow = 'hidden';
+}
+function closeLegal() {
+  document.getElementById('legal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// ══════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════
+const DEMO_USERS = [
+  { email:'sender@demo.com', password:'demo1234', firstname:'Alice', lastname:'Martin', role:'sender', country:'Bénin' },
+  { email:'intermediaire@demo.com', password:'demo1234', firstname:'Marc', lastname:'Dupont', role:'intermediary', country:'France' }
+];
+let registeredUsers = [...DEMO_USERS];
+let currentUser = null;
+let selectedRole = 'sender';
+
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) { el.scrollIntoView({behavior:'smooth'}); }
+  else { goPage('trusted'); }
+}
+
+function openAuth(tab) {
+  const ov = document.getElementById('auth-overlay');
+  ov.style.cssText = 'display:flex !important;position:fixed;inset:0;background:rgba(5,8,16,0.92);backdrop-filter:blur(14px);z-index:9999;align-items:center;justify-content:center;padding:20px;overflow-y:auto';
+  document.body.style.overflow = 'hidden';
+  switchAuthTab(tab || 'login');
+}
+function closeAuth() {
+  document.getElementById('auth-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function switchAuthTab(tab) {
+  document.getElementById('panel-login').style.display   = tab === 'login'    ? 'block' : 'none';
+  document.getElementById('panel-register').style.display = tab === 'register' ? 'block' : 'none';
+  document.getElementById('panel-forgot').style.display  = 'none';
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  clearAuthErrors();
+}
+function showForgot() {
+  document.getElementById('panel-login').style.display = 'none';
+  document.getElementById('panel-forgot').style.display = 'block';
+  document.getElementById('tab-login').classList.remove('active');
+  document.getElementById('forgot-success').style.display = 'none';
+  document.getElementById('forgot-form-inner').style.display = 'block';
+}
+function clearAuthErrors() {
+  const ids = ['err-lemail','err-lpwd','err-rfirstname','err-rlastname','err-remail','err-rpwd','err-rconfirm','err-rcountry','err-rterms'];
+  document.getElementById('login-error').style.display = 'none';
+  ids.forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+}
+function selectRole(role) {
+  selectedRole = role;
+  document.getElementById('role-sender').classList.toggle('active', role==='sender');
+  document.getElementById('role-intermediary').classList.toggle('active', role==='intermediary');
+}
+function togglePwd(inputId, btn) {
+  const inp = document.getElementById(inputId);
+  inp.type = inp.type==='password' ? 'text' : 'password';
+  btn.textContent = inp.type==='password' ? '👁' : '🙈';
+}
+function checkPwdStrength(pwd) {
+  let score=0;
+  if(pwd.length>=8) score++;
+  if(/[A-Z]/.test(pwd)) score++;
+  if(/[0-9]/.test(pwd)) score++;
+  if(/[^A-Za-z0-9]/.test(pwd)) score++;
+  const lvls=[{p:'0%',c:'transparent',t:''},{p:'25%',c:'#ff4444',t:'Très faible'},{p:'50%',c:'#ff6b2b',t:'Faible'},{p:'75%',c:'#ffd166',t:'Moyen'},{p:'100%',c:'#00e676',t:'Fort 💪'}];
+  const lv=lvls[score];
+  const fill=document.getElementById('pwd-strength-fill');
+  const label=document.getElementById('pwd-strength-label');
+  fill.style.width=lv.p; fill.style.background=lv.c;
+  label.textContent=lv.t; label.style.color=lv.c;
+}
+function fillDemo(type) {
+  const u = type==='sender' ? DEMO_USERS[0] : DEMO_USERS[1];
+  document.getElementById('l-email').value = u.email;
+  document.getElementById('l-password').value = u.password;
+  [document.getElementById('l-email'), document.getElementById('l-password')].forEach(el => {
+    el.style.borderColor='var(--blue)';
+    setTimeout(()=>{ el.style.borderColor=''; }, 700);
+  });
+}
+function doLogin() {
+  clearAuthErrors();
+  const email = document.getElementById('l-email').value.trim();
+  const pwd   = document.getElementById('l-password').value;
+  let valid = true;
+  if(!email||!email.includes('@')){ document.getElementById('err-lemail').style.display='block'; valid=false; }
+  if(!pwd){ document.getElementById('err-lpwd').style.display='block'; valid=false; }
+  if(!valid) return;
+  const user = registeredUsers.find(u=>u.email.toLowerCase()===email.toLowerCase()&&u.password===pwd);
+  if(!user){ document.getElementById('login-error').style.display='block'; return; }
+  loginSuccess(user);
+}
+function doRegister() {
+  clearAuthErrors();
+  let valid = true;
+  const fn      = document.getElementById('r-firstname').value.trim();
+  const ln      = document.getElementById('r-lastname').value.trim();
+  const email   = document.getElementById('r-email').value.trim();
+  const pwd     = document.getElementById('r-password').value;
+  const confirm = document.getElementById('r-confirm').value;
+  const country = document.getElementById('r-country').value;
+  const terms   = document.getElementById('r-terms').checked;
+  const showE = (id,msg)=>{ const el=document.getElementById(id); if(msg)el.textContent=msg; el.style.display='block'; valid=false; };
+  if(!fn) showE('err-rfirstname');
+  if(!ln) showE('err-rlastname');
+  if(!email||!email.includes('@')) showE('err-remail');
+  if(!pwd||pwd.length<8) showE('err-rpwd');
+  if(pwd!==confirm) showE('err-rconfirm');
+  if(!country) showE('err-rcountry');
+  if(!terms) showE('err-rterms');
+  if(!valid) return;
+  if(registeredUsers.find(u=>u.email.toLowerCase()===email.toLowerCase())){ showE('err-remail','Cet email est déjà utilisé.'); return; }
+  const newUser={email,password:pwd,firstname:fn,lastname:ln,role:selectedRole,country};
+  registeredUsers.push(newUser);
+  loginSuccess(newUser);
+}
+function doForgot() {
+  const email=document.getElementById('f-email').value.trim();
+  if(!email||!email.includes('@')) return;
+  document.getElementById('forgot-form-inner').style.display='none';
+  document.getElementById('forgot-success').style.display='block';
+}
+function loginSuccess(user) {
+  currentUser=user;
+  closeAuth();
+  updateNavAuth();
+  showToast('Bienvenue, '+user.firstname+' ! 👋');
+  goPage('dashboard');
+}
+function logout() {
+  currentUser=null;
+  updateNavAuth();
+  goPage('home');
+  showToast('Vous avez été déconnecté.');
+}
+function updateNavAuth() {
+  const in_=!!currentUser;
+  document.getElementById('nav-auth-btns').style.display=in_?'none':'flex';
+  document.getElementById('nav-user-btns').style.display=in_?'flex':'none';
+  if(in_){
+    document.getElementById('nav-username').textContent=currentUser.firstname;
+    document.getElementById('nav-avatar').textContent=currentUser.firstname[0].toUpperCase();
+  }
+}
+function showToast(msg) {
+  let t=document.getElementById('app-toast');
+  if(!t){ t=document.createElement('div'); t.id='app-toast';
+    t.style.cssText='position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);background:#162240;border:1px solid rgba(26,111,255,0.3);border-radius:100px;padding:10px 22px;font-size:0.88rem;font-weight:600;color:#e8edf8;z-index:10000;opacity:0;transition:all 0.3s;white-space:nowrap;box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:none';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._t); t._t=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; },3200);
+}
+
+
+
+// ══════════════════════════════════════════════
+// MOBILE MENU
+// ══════════════════════════════════════════════
+function toggleMobileMenu() {
+  const btn = document.getElementById('hamburger-btn');
+  const menu = document.getElementById('mobile-menu');
+  btn.classList.toggle('open');
+  menu.classList.toggle('open');
+}
+function closeMobileMenu() {
+  document.getElementById('hamburger-btn').classList.remove('open');
+  document.getElementById('mobile-menu').classList.remove('open');
+}
+
+// ══════════════════════════════════════════════
+// MULTI-STEP SENDER FORM
+// ══════════════════════════════════════════════
+let currentStep = 1;
+const TOTAL_STEPS = 3;
+
+function setStep(n) {
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const panel = document.getElementById('sp-' + i);
+    const item  = document.getElementById('si-' + i);
+    if (!panel || !item) continue;
+    panel.classList.toggle('active', i === n);
+    item.classList.remove('active','done');
+    if (i === n) item.classList.add('active');
+    else if (i < n) item.classList.add('done');
+    // Update dot content
+    const dot = item.querySelector('.step-dot');
+    if (dot) dot.textContent = i < n ? '✓' : String(i);
+  }
+  currentStep = n;
+}
+
+function nextStep(from) {
+  if (from === 1) {
+    let valid = true;
+    const amount = document.getElementById('s-amount').value;
+    if (!amount || parseFloat(amount) <= 0) { showErr('err-amount', true); valid = false; } else showErr('err-amount', false);
+    const crypto = document.getElementById('s-crypto').value;
+    if (!crypto) { showErr('err-crypto', true); valid = false; } else showErr('err-crypto', false);
+    const txlink = document.getElementById('s-txlink').value;
+    if (!txlink || !isValidUrl(txlink)) { showErr('err-txlink', true); valid = false; } else showErr('err-txlink', false);
+    if (!valid) return;
+    updateCommissionPreview();
+  }
+  if (from === 2) {
+    let valid = true;
+    const country = document.getElementById('s-country').value;
+    if (!country) { showErr('err-country', true); valid = false; } else showErr('err-country', false);
+    const block = document.getElementById('s-block').value;
+    if (!block) { showErr('err-block', true); valid = false; } else showErr('err-block', false);
+    if (!valid) return;
+    updateCommissionPreview();
+  }
+  if (from < TOTAL_STEPS) setStep(from + 1);
+}
+
+function prevStep(from) {
+  if (from > 1) setStep(from - 1);
+}
+
+function updateCommissionPreview() {
+  const amount = parseFloat(document.getElementById('s-amount')?.value) || 0;
+  const comm   = parseFloat(document.getElementById('s-commission')?.value) || 30;
+  const curr   = document.getElementById('s-currency')?.value || 'EUR';
+  const symbols = { EUR:'€', USD:'$', GBP:'£', XOF:' FCFA', MAD:' DH' };
+  const sym = symbols[curr] || '€';
+  const preview = document.getElementById('commission-preview');
+  if (preview && amount > 0) {
+    preview.style.display = 'block';
+    const commAmt  = (amount * comm / 100);
+    const youGet   = amount - commAmt;
+    document.getElementById('prev-total').textContent      = amount.toLocaleString('fr-FR') + sym;
+    document.getElementById('prev-commission').textContent = commAmt.toLocaleString('fr-FR') + sym;
+    document.getElementById('prev-receive').textContent    = youGet.toLocaleString('fr-FR') + sym;
+  }
+}
+
+// ══════════════════════════════════════════════
+// VERIFIED BADGE in renderList
+// ══════════════════════════════════════════════
+// Override renderList to add verified badges
+const _renderListOrig = renderList;
+function renderList(data) {
+  const grid = document.getElementById('inter-grid');
+  if (!grid) return;
+  if (!data || data.length === 0) {
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><h3>Aucun résultat</h3><p>Modifiez vos filtres pour trouver un intermédiaire.</p></div>';
+    return;
+  }
+  grid.innerHTML = data.map(i => {
+    const isTop = i.reviews > 80;
+    const isNew = i.reviews < 35;
+    return `
+    <div class="inter-card" onclick="showDetail(${i.id})">
+      <div class="inter-card-header">
+        <div class="inter-avatar" style="background:${i.color}22;color:${i.color}">${i.emoji}</div>
+        <div class="inter-info">
+          <div class="inter-name">${i.name} <span class="verified-badge">✓ Vérifié</span>${isTop ? ' <span class="badge badge-yellow" style="font-size:0.6rem;padding:2px 6px">⭐ Top</span>' : ''}</div>
+          <div class="inter-country">📍 ${i.country}</div>
+        </div>
+        <div class="badge ${i.type==='bancaire'?'badge-blue':i.type==='crypto'?'badge-violet':'badge-green'}">
+          ${i.type==='bancaire'?'🏦 Bancaire':i.type==='crypto'?'🔐 Crypto':'🔄 Les deux'}
+        </div>
+      </div>
+      <div class="inter-chips">
+        ${i.cryptos.map(c=>`<span class="badge badge-orange">${c}</span>`).join('')}
+        <span class="badge badge-yellow">💰 ${i.commission}</span>
+        ${isNew?'<span class="badge badge-violet">🆕 Nouveau</span>':''}
+      </div>
+      <div class="inter-stats">
+        <div><div class="inter-stat-label">Note</div><div class="inter-stat-val">${i.rating} <span class="stars">★</span></div></div>
+        <div><div class="inter-stat-label">Avis</div><div class="inter-stat-val">${i.reviews}</div></div>
+        <div><div class="inter-stat-label">Plateforme</div><div class="inter-stat-val" style="font-size:0.8rem;font-family:var(--font-mono)">${i.platform.split(',')[0]}</div></div>
+      </div>
+      <button class="btn-primary" style="width:100%;padding:11px" onclick="event.stopPropagation();showDetail(${i.id})">Contacter / Candidater →</button>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+// OVERRIDE sender form submit to support steps
+// ══════════════════════════════════════════════
+// The original sender-form submit listener is still active.
+// We only need to ensure step 3 validation runs on submit.
+
+// Override sender form submit
+document.addEventListener('DOMContentLoaded', () => {
+  // Re-attach submit with step-3 validation
+  const form = document.getElementById('sender-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const comm = document.getElementById('s-commission').value;
+      if (!comm || parseFloat(comm) < 5 || parseFloat(comm) > 50) {
+        showErr('err-commission', true); return;
+      } else showErr('err-commission', false);
+      // show success
+      document.getElementById('sender-steps').style.display = 'none';
+      document.getElementById('sender-success').style.display = 'block';
+      window.scrollTo(0, 0);
+    });
+  }
+
+  // Initialize step
+  setStep(1);
+
+  // Init progress bar animation
+  setTimeout(() => {
+    const fill = document.querySelector('.progress-bar-fill');
+    if (fill) { fill.style.width = '0'; setTimeout(() => fill.style.width = '70%', 100); }
+  }, 500);
+});
+
+</script>
+</body>
+</html>
